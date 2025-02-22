@@ -116,6 +116,37 @@ class DropSystem(Choice):
     option_bookofeverythingbalanced = 1
     default = 1
 
+class RandomizeReceptions(Choice):
+    """
+    How to randomize Receptions.
+
+    Vanilla - Receptions work like in vanilla: Complete all receptions in a chapter to open next chapter's receptions. No Randomization;
+    Vanilla+ - No Reception randomization, but receptions are divided in storylines. Opening chapter's doesn't require completing every previous chapter's Receptions,
+               You only have to complete one of the previous chapter's last receptions. (Story Line Example: Zwei Association -> Dawn Office -> Wedge Office -> The 8 o`Clock Circus -> ...)
+    Random - Same as above except all receptions are shuffled (up to +-1 chapters);
+    """
+
+    display_name = "Randomize Receptions"
+    option_vanilla = 0
+    option_vanilla_plus = 1
+    option_random = 2
+    default = 2
+
+class RandomizeAbnormalities(Choice):
+    """
+    How to randomize Abnormalities.
+
+    Vanilla - Abnormality order is exact same as in vanilla;
+    Suppressions - Suppressions' order and floor is shuffled (Example: The Knight of Despair(Tiphereth II) instead of Singing Machine(Yesod III))
+    Full - Same as above plus all Floors' Realizations are also shuffled;
+    """
+
+    display_name = "Randomize Abnormalities"
+    option_vanilla = 0
+    option_suppressions = 1
+    option_full = 2
+    default = 2
+
 class RandomizePages(Choice):
     """
     !!!NOT IMPLEMENTED!!!

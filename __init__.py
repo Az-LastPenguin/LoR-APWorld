@@ -26,6 +26,8 @@ class LORWorld(World):
     options: LOROptions  # typing hints for option results
     topology_present = True  # show path to required location checks in spoiler
 
+    run_seed: int
+
     item_name_to_id = {name: data.code for name, data in item_table.items()}
     item_name_groups = { 
         "Floor": {name for name, data in item_table.items() if data.category == "Floor"},
@@ -35,19 +37,57 @@ class LORWorld(World):
         "Receptions": {name for name, data in item_table.items() if data.category == "Reception"},
         "Progression": {name for name, data in item_table.items() if data.category == "Progression"},
     }
-    location_name_to_id = {data.name: data.address for data in location_table}
+    location_name_to_id = {}
 
     def generate_early(self) -> None:
+        self.random.seed(None if self.options.seed.value == -1 else self.options.seed.value)
+
+    # Fills region with location in dict's order, also making locations require previous ones
+    def populate_region(self, region, locations, first_important = False):
+        pass
+
+    # Creates an exit from exit_region to enter_region with requirement of collecting item from last location of exit_region
+    def connect_regions(self, exit_region, enter_region):
         pass
 
     def create_regions(self) -> None:
-        menu_region = Region("Menu", self.player, self.multiworld)
-        self.multiworld.regions.append(menu_region)
+        menu = Region("Menu", self.player, self.multiworld)
+        self.multiworld.regions.append(menu)
 
-        main_region = Region("Game", self.player, self.multiworld)
-        for data in location_table: # TODO: Add or remove "clear" locations depending on the goal
-            main_region.locations.append(LORLocation(self.player, data.name, data.address, main_region))
-        self.multiworld.regions.append(main_region)
+        # Receptions
+        canard = Region("Canard", self.player, self.multiworld)
+        self.populate_region(canard, location_table["Canard"])
+        menu.connect(canard)
+
+        urban_legend = Region("Urban Legend", self.player, self.multiworld)
+        self.populate_region(urban_legend, location_table["Urban Legend"])
+        self.connect_regions(canard, urban_legend)
+
+        story_A = Region("StoryA", self.player, self.multiworld)
+        self.populate_region(story_A, location_table["StoryA"])
+        self.connect_regions(urban_legend, story_A)
+
+        story_B = Region("StoryB", self.player, self.multiworld)
+        self.populate_region(story_A, location_table["StoryB"])
+        self.connect_regions(urban_legend, story_B)
+
+        story_C = Region("StoryC", self.player, self.multiworld)
+        self.populate_region(story_A, location_table["StoryC"])
+        self.connect_regions(urban_legend, story_C)
+
+        story_D = Region("StoryD", self.player, self.multiworld)
+        self.populate_region(story_A, location_table["StoryD"])
+        self.connect_regions(urban_legend, story_D)
+
+
+
+
+
+
+        # main_region = Region("Game", self.player, self.multiworld)
+        # for data in location_table: # TODO: Add or remove "clear" locations depending on the goal
+        #     main_region.locations.append(LORLocation(self.player, data.name, data.address, main_region))
+        # self.multiworld.regions.append(main_region)
 
         # TODO: Logic
         # I think one way is to make it like:
@@ -57,15 +97,15 @@ class LORWorld(World):
         #               |-> Story line A (Stray Dogs to Carnival, etc) -> Other endgoals
         #               -> ...
 
-        #end_region = Region("End", self.player, self.multiworld)
-        #end_event = LORLocation(self.player, "End  Condition", None, end_region)
-        #end_event.place_locked_item(LORItem("End Condition Beaten", ItemClassification.progression, None, self.player))
-        #end_region.locations.append(end_event)
-        #self.multiworld.regions.append(end_region)
-        #self.multiworld.completion_condition[self.player] = lambda state: state.has("End Condition Beaten", self.player)
+        # end_region = Region("End", self.player, self.multiworld)
+        # end_event = LORLocation(self.player, "End  Condition", None, end_region)
+        # end_event.place_locked_item(LORItem("End Condition Beaten", ItemClassification.progression, None, self.player))
+        # end_region.locations.append(end_event)
+        # self.multiworld.regions.append(end_region)
+        # self.multiworld.completion_condition[self.player] = lambda state: state.has("End Condition Beaten", self.player)
 
-        menu_region.connect(main_region)
-        #main_region.connect(end_region)
+        # menu_region.connect(main_region)
+        # main_region.connect(end_region)
 
     def create_item(self, item: str) -> LORItem:
         data = item_table[item]
@@ -122,7 +162,7 @@ class LORWorld(World):
 
         return {
             # Seed
-            "seed": random.randint(0, 2147483647).__str__(),
+            "seed": self.run_seed.__str__(),
 
             # Settings
             "fillers": self.options.fillers.value,
