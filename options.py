@@ -178,4 +178,6 @@ class LOROptions(PerGameCommonOptions):
     ensemble_battles: EnsembleBattles
     abno_page_balance: AbnoPagesBalance
     drop_system: DropSystem
+    randomize_receptions: RandomizeReceptions
+    randomize_abnos: RandomizeAbnormalities
     randomize_pages: RandomizePages

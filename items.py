@@ -10,8 +10,6 @@ class LORItemData(NamedTuple):
     item_type: ItemClassification = ItemClassification.filler
     weight: Optional[int] = None
 
-base_offset: int = 143000
-
 items: Dict[str, str] = {
     # Library
     # Total - 10 (Up to 9 in a run)
@@ -63,7 +61,6 @@ items: Dict[str, str] = {
     "Floor of Religion EGO Page":                                       "EGOPage",
  
     # Progression Stuff
-    # Total - All other free spaces
     "Binah":                                                            "Progression",
     "Black Silence":                                                    "Progression",
 }
@@ -77,9 +74,9 @@ item_table = {}
 
 i = 0
 for j, v in items.items():
-    item_table[j] = LORItemData(v, base_offset + i, ItemClassification.progression)
+    item_table[j] = LORItemData(v, i, ItemClassification.progression)
     i += 1
 
 for j, v in useful.items():
-    item_table[j] = LORItemData(v, base_offset + i, ItemClassification.useful)
+    item_table[j] = LORItemData(v, i, ItemClassification.useful)
     i += 1

@@ -1,8 +1,7 @@
 import typing
-import random
-from .options import LOROptions  # the options we defined earlier
+from .options import LOROptions
 from .items import LORItem, item_table
-from .locations import location_table, LORLocation  # same as above
+from .locations import floor_models, all_locations, chapter_models, LORLocation
 from worlds.AutoWorld import World, WebWorld
 from worlds.generic.Rules import add_item_rule, set_rule
 from BaseClasses import Entrance, ItemClassification, Region, Tutorial
@@ -21,9 +20,9 @@ class LORWebWorld(WebWorld):
     )]
 
 class LORWorld(World):
-    game = "Library of Ruina"  # name of the game/world
-    options_dataclass = LOROptions  # options the player can set
-    options: LOROptions  # typing hints for option results
+    game = "Library of Ruina" 
+    options_dataclass = LOROptions
+    options: LOROptions
     topology_present = True  # show path to required location checks in spoiler
 
     run_seed: int
@@ -37,11 +36,47 @@ class LORWorld(World):
         "Receptions": {name for name, data in item_table.items() if data.category == "Reception"},
         "Progression": {name for name, data in item_table.items() if data.category == "Progression"},
     }
-    location_name_to_id = {}
+    location_name_to_id = all_locations
 
     def generate_early(self) -> None:
-        self.random.seed(None if self.options.seed.value == -1 else self.options.seed.value)
+        self.random.seed()
 
+        # Randomize Abnos if needed 
+        if self.options.randomize_abnos.value == 1 or self.options.randomize_abnos.value == 2:
+            all_abnos = []
+            for i in floor_models:
+                for j in i.abnos:
+                    all_abnos.append(j)
+            
+            self.random.shuffle(all_abnos)
+
+            for i in floor_models:
+                abnos = len(i.abnos)
+                print(abnos)
+                i.abnos.clear()
+                for j in range(abnos):
+                    i.abnos.append(all_abnos.pop())
+            
+            if self.options.randomize_abnos.value == 2:
+                all_realizations = []
+                for i in floor_models:
+                    all_realizations.append(i.realization)
+                
+                self.random.shuffle(all_realizations)
+
+                for i in floor_models:
+                    i.realization = all_realizations.pop()
+        
+        # Randomize Receptions if needed
+        if self.options.randomize_receptions.value == 2:
+            for i in chapter_models: # TODO: Somehow make client know how receptions were shuffled
+                self.random.shuffle(i.receptions)
+            
+            
+
+            
+
+        
     # Fills region with location in dict's order, also making locations require previous ones
     def populate_region(self, region, locations, first_important = False):
         pass
@@ -54,30 +89,41 @@ class LORWorld(World):
         menu = Region("Menu", self.player, self.multiworld)
         self.multiworld.regions.append(menu)
 
+        main_region = Region("Game", self.player, self.multiworld)
+
+        print(all_locations.__len__())
+
+        for l, i in all_locations.items():
+            main_region.locations.append(LORLocation(self.player, l, i, main_region))
+
+
+        self.multiworld.regions.append(main_region)
+        menu.connect(main_region)
+
         # Receptions
-        canard = Region("Canard", self.player, self.multiworld)
-        self.populate_region(canard, location_table["Canard"])
-        menu.connect(canard)
+        #canard = Region("Canard", self.player, self.multiworld)
+        #self.populate_region(canard, location_table["Canard"])
+        #menu.connect(canard)
 
-        urban_legend = Region("Urban Legend", self.player, self.multiworld)
-        self.populate_region(urban_legend, location_table["Urban Legend"])
-        self.connect_regions(canard, urban_legend)
+        #urban_legend = Region("Urban Legend", self.player, self.multiworld)
+        #self.populate_region(urban_legend, location_table["Urban Legend"])
+        #self.connect_regions(canard, urban_legend)
 
-        story_A = Region("StoryA", self.player, self.multiworld)
-        self.populate_region(story_A, location_table["StoryA"])
-        self.connect_regions(urban_legend, story_A)
+        #story_A = Region("StoryA", self.player, self.multiworld)
+        #self.populate_region(story_A, location_table["StoryA"])
+        #self.connect_regions(urban_legend, story_A)
 
-        story_B = Region("StoryB", self.player, self.multiworld)
-        self.populate_region(story_A, location_table["StoryB"])
-        self.connect_regions(urban_legend, story_B)
+        #story_B = Region("StoryB", self.player, self.multiworld)
+        #self.populate_region(story_A, location_table["StoryB"])
+        #self.connect_regions(urban_legend, story_B)
 
-        story_C = Region("StoryC", self.player, self.multiworld)
-        self.populate_region(story_A, location_table["StoryC"])
-        self.connect_regions(urban_legend, story_C)
+        #story_C = Region("StoryC", self.player, self.multiworld)
+        #self.populate_region(story_A, location_table["StoryC"])
+        #self.connect_regions(urban_legend, story_C)
 
-        story_D = Region("StoryD", self.player, self.multiworld)
-        self.populate_region(story_A, location_table["StoryD"])
-        self.connect_regions(urban_legend, story_D)
+        #story_D = Region("StoryD", self.player, self.multiworld)
+        #self.populate_region(story_A, location_table["StoryD"])
+        #self.connect_regions(urban_legend, story_D)
 
 
 
@@ -120,34 +166,34 @@ class LORWorld(World):
         
 
         #Abno pages items
-        for name in self.item_name_groups["AbnoPages"]:
-            itempool += [name]*5
+        #for name in self.item_name_groups["AbnoPages"]:
+        #    itempool += [name]*5
 
 
         #Librarians (Binah 3 librarians because 2 are open from the start: the locked binah and another librarian)
-        for name in self.item_name_groups["Librarians"]:
-            if name == "Floor of Philosophy Librarian":
-                itempool += [name]*3
-            else:
-                itempool += [name]*4
+        #for name in self.item_name_groups["Librarians"]:
+        #    if name == "Floor of Philosophy Librarian":
+        #        itempool += [name]*3
+        #    else:
+        #        itempool += [name]*4
 
 
         #EGO
-        for name in self.item_name_groups["EGOPage"]:
-            itempool += [name]*5
+        #for name in self.item_name_groups["EGOPage"]:
+        #    itempool += [name]*5
 
 
         #Receptions
-        for name in self.item_name_groups["Receptions"]:
-            itempool.append(name)
+        #for name in self.item_name_groups["Receptions"]:
+        #    itempool.append(name)
         
 
         #Mandatory Librarian upgrades
-        itempool += ["Bonus Passive Attribute Point"]*8
-        itempool += ["Binah"]
-        itempool += ["Black Silence"]
-
-        itempool += ["Book of Everything"]*(len(location_table)-len(itempool))
+        #itempool += ["Bonus Passive Attribute Point"]*8
+        #itempool += ["Binah"]
+        #itempool += ["Black Silence"]
+#
+        itempool += ["Book of Everything"]*(len(all_locations)-len(itempool))
 
         self.multiworld.itempool += map(self.create_item, itempool)
 
@@ -162,7 +208,7 @@ class LORWorld(World):
 
         return {
             # Seed
-            "seed": self.run_seed.__str__(),
+            "seed": str(self.random.randint(0, 2147483647)),
 
             # Settings
             "fillers": self.options.fillers.value,
@@ -179,3 +225,4 @@ class LORWorld(World):
             # Data
             "books_of_everything": total,
         }
+    
