@@ -102,11 +102,7 @@ items: Dict[str, str] = {
  
     "Reception of The Hana Association":                                "Reception",
  
-    # General Receptions - 19 
-    "Backstreets Butchers Reception":                                   "Reception",
-    "Hook Office Remnants Reception":                                   "Reception",
-    "Urban Myth-class Syndicate Reception":                             "Reception",
- 
+    # General Receptions - 16
     "Grade 8 Fixers Reception":                                         "Reception",
     "Grade 7 Fixers Reception":                                         "Reception",
     "Urban Legend-class Office Reception":                              "Reception",
