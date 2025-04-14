@@ -4,9 +4,9 @@ from Options import OptionSet, Range, Choice, PerGameCommonOptions, Toggle
 
 class Fillers(Range):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!!TODO
 
-    Amount of pages from books that get replaced with filler items
+    Amount of pages from books that get replaced with filler items.
     """
 
     display_name = "Filler Item%"
@@ -16,9 +16,9 @@ class Fillers(Range):
 
 class Traps(Range):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!! TODO
 
-    Amount of filler items that get replaced by a trap
+    Amount of filler items that get replaced by a trap.
     """
 
     display_name = "Trap Item%"
@@ -28,7 +28,7 @@ class Traps(Range):
 
 class TrapsDifficulty(Choice):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!! TODO
     
     How miserable will traps make your life feel.
 
@@ -48,31 +48,45 @@ class TrapsDifficulty(Choice):
 
 class LockedFloors(Toggle):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!! TODO
 
-    Whether or not every floor except one (Keter by default) is locked at the start of the run.
+    Whether or not every floor except one (Random by default) is locked at the start of the run.
     """
     display_name = "Locked Floors"
+    default = False
 
-class RandomFirstFloor(Toggle):
+class FirstFloor(Choice):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!! TODO
 
-    If Locked Floors is On, whether or not to randomize which floor is the only one unlocked.
+    If Locked Floors is On, which floor will be the first one unlocked.
     """
-    display_name = "Random First Floor"
+    display_name = "First Unlocked Floor"
+    option_malkuth = 0
+    option_yesod = 1
+    option_hod = 2
+    option_netzach = 3
+    option_tiphereth = 4
+    option_gebura = 5
+    option_chesed = 6
+    option_binah = 7
+    option_hokma = 8
+    option_keter = 9
+    option_random = 10
+    default = 10
 
 class EndGoals(OptionSet):
     """
     End Goals of a Run.
     You should achieve all of the selected goals, in order to complete the Run.
     Every goal also contains some checks. (Each ensemble battle, Black silence battle, etc.)
-    Every goal not selected will STILL be in the game, but will not yield checks. (This isn't implemented yet.)
+    Every goal not selected will STILL be in the game and WILL yield checks, though those checks will not contain
+    any item significant to progression (such as a Librarian, Abno Pages, EGO Pages and others). TODO
     
-    'Reverberation Ensemble' - Defeat X of 10 Ensemble battles. X can be set in the 'Reverberation Ensemble Goal Battles' setting;
-    'Black Silence' - Complete Reception of The Black Silence;
-    'Keter Realization' - Realize the Floor of General Works
-    'Distorted Ensemble' - Complete Reception of The Reverberation Ensemble Distorted
+    'Reverberation Ensemble' - Defeat X of 10 Ensemble battles. X can be set in the 'Reverberation Ensemble Goal Battles' setting.
+    'Black Silence' - Complete Reception of The Black Silence.
+    'Keter Realization' - Realize the Floor of General Works.
+    'Distorted Ensemble' - Complete Reception of The Reverberation Ensemble Distorted.
     """
 
     display_name = "End Goals"
@@ -86,20 +100,49 @@ class EnsembleBattles(Range):
     range_end = 10
     default = 10
 
-class AbnoPagesBalance(Choice):
+class AbnoPageRandomization(Choice):
     """
-    How balanced randomization of Abnormality pages is. 
+    The way Abnormality pages are randomized. 
 
-    Unbalanced - Fully random;
-    Balanced - Each floor is guaranteed to have atleast 3 cards of each emotion level;
-    Vanilla - Pages are distributed like in vanilla (6 of I, 6 of II, 3 of III).
+    None - Pages are not randomized. TODO
+    InFloorShuffle - Pages order of acquirement is shuffled in their floors. TODO
+                     (Example shuffled Malkuth's floor Abno Pages order: Queen Bee, Fairy Festival, Snow White's Apple, Scorched Girl, Happy Teddy Bear)
+    Shuffle - Pages are shuffled between the floors, retaining their Emotion State (Positive/Negative), Rate and Emotion Levels. TODO
+    VanillaLike - Pages are shuffled between the floors, their Emotion State and Rate are random,
+                  Emotion Levels are randomized and distributed like in vanilla. (6 of I, 6 of II, 3 of III per floor)
+    GuaranteedRandom - Pages are shuffled between the floors, their Emotion State, Rate and Emotion levels are randomized. It is guaranteed that there will be at least:
+                       4 Positive Pages, 4 Negative Pages, 3 Pages of each Emotion Level per floor.
+    Random - Pure random. Pages are shuffled, Emotion State, Rate and Emotion Level are randomized.
     """
 
     display_name = "Abnormality Page Randomization"
-    option_unbalanced = 0
-    option_balanced = 1
-    option_vanilla = 2
-    default = 1
+    option_none = 0
+    option_infloorshuffle = 1
+    option_shuffle = 2
+    option_vanillalike = 3
+    option_guaranteed = 4
+    option_random = 5
+    default = 4
+
+class ExodiaGuarantee(Toggle):
+    """
+    !!!NOT IMPLEMENTED!!! TODO
+
+    Has no effect with the following 'Abnormality Page Randomization' settings: None, InFloorShuffle.
+    
+    If ON, certain sets of Abno Pages will be forced to appear on their vanilla floor with same Emotion State, Rate and Emotion Levels.
+    """
+    display_name = "Guarantee Exodia Abno Sets"
+    default = False
+
+class EGOPageRandomization(Toggle):
+    """
+    !!!NOT IMPLEMENTED!!! TODO
+
+    If ON, EGO pages will be shuffled between the floors.
+    """
+    display_name = "Randomize EGO Pages"
+    default = True
 
 class DropSystem(Choice):
     """
@@ -116,40 +159,56 @@ class DropSystem(Choice):
     option_bookofeverythingbalanced = 1
     default = 1
 
-class RandomizeReceptions(Choice):
+class ReceptionsProgression(Choice):
     """
-    How to randomize Receptions.
+    !!!NOT IMPLEMENTED!!! TODO
 
-    Vanilla - Receptions work like in vanilla: Complete all receptions in a chapter to open next chapter's receptions. No Randomization;
-    Vanilla+ - No Reception randomization, but receptions are divided in storylines. Opening chapter's doesn't require completing every previous chapter's Receptions,
-               You only have to complete one of the previous chapter's last receptions. (Story Line Example: Zwei Association -> Dawn Office -> Wedge Office -> The 8 o`Clock Circus -> ...)
-    Random - Same as above except all receptions are shuffled (up to +-1 chapters);
+    The way receptions progress in the game.
+
+    Unlocked - Every Reception is unlocked from the start and receptions are placed just like in the vanilla game.
+    Items - Every Reception in chapters 2-7 is locked, and they are unlocked with respective "Reception of X" item. (Kinda Pre 0.4 way)
+    Randomized - Receptions are shuffled and randomly placed while having vanilla-like progression (you won't get SotC receptions in the beginning).
+                 Receptions are unlocked by completing previous reception. First Reception is ALWAYS Rats.
+    RandomizedItems - 'Items' and 'Randomized' Options combined.
     """
 
-    display_name = "Randomize Receptions"
-    option_vanilla = 0
-    option_vanilla_plus = 1
-    option_random = 2
+    display_name = "Receptions Progression"
+    option_unlocked = 0
+    option_items = 1
+    option_randomized = 2
+    option_randomizeditems = 3
     default = 2
 
-class RandomizeAbnormalities(Choice):
+class AbnoProgression(Choice):
     """
-    How to randomize Abnormalities.
+    !!!NOT IMPLEMENTED!!! TODO
 
-    Vanilla - Abnormality order is exact same as in vanilla;
-    Suppressions - Suppressions' order and floor is shuffled (Example: The Knight of Despair(Tiphereth II) instead of Singing Machine(Yesod III))
-    Full - Same as above plus all Floors' Realizations are also shuffled;
+    The way Abnormality suppressions/Floor realizations progress in the game
+
+    Vanilla - Abnormality order is exact same as in vanilla.
+    Shuffle - Suppressions' order is shuffled in the floor.
+    FloorShuffle - Suppressions' order AND floor is shuffled. (Example: The Knight of Despair(Tiphereth II) instead of Singing Machine(Yesod III))
+    Random - Same as above, but all Floors' Realizations are also shuffled.
     """
 
-    display_name = "Randomize Abnormalities"
+    display_name = "Abnormality Progression"
     option_vanilla = 0
-    option_suppressions = 1
-    option_full = 2
-    default = 2
+    option_shuffle = 1
+    option_floorshuffle = 2
+    option_random = 3
+    default = 3
+
+class PassivePoints(Range):
+    """Amount of Passive Attribution Point items there will be. In-game starting amount is always 8, point items will add +1 to the in-game amount.
+    Default amount of those items is 8 due to vanilla max points being 16."""
+    display_name = "Passive Attribution Point Items"
+    range_start = 0
+    range_end = 99
+    default = 8
 
 class RandomizePages(Choice):
     """
-    !!!NOT IMPLEMENTED!!!
+    !!!NOT IMPLEMENTED!!! TODO
 
     To what degree can pages be randomized.
 
@@ -159,7 +218,7 @@ class RandomizePages(Choice):
     Havoc - Above and: Combat Pages' VFX and SFX, Key Pages' visuals;
     """
 
-    display_name = "Randomize Pages"
+    display_name = "Pages Randomization"
     option_none = 0
     option_basic = 1
     option_more = 2
@@ -173,11 +232,14 @@ class LOROptions(PerGameCommonOptions):
     traps: Traps
     traps_difficulty: TrapsDifficulty
     locked_floors: LockedFloors
-    random_first_floor: RandomFirstFloor
+    first_floor: FirstFloor
     end_goals: EndGoals
     ensemble_battles: EnsembleBattles
-    abno_page_balance: AbnoPagesBalance
+    abno_page_randomization: AbnoPageRandomization
+    exodia_guaratnee: ExodiaGuarantee
+    ego_page_randomization: EGOPageRandomization
     drop_system: DropSystem
-    randomize_receptions: RandomizeReceptions
-    randomize_abnos: RandomizeAbnormalities
+    reception_prog: ReceptionsProgression
+    abno_prog: AbnoProgression
+    passive_points: PassivePoints
     randomize_pages: RandomizePages

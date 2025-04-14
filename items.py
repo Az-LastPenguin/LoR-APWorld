@@ -4,79 +4,101 @@ from BaseClasses import Item, ItemClassification
 class LORItem(Item):
     game: str = "Library of Ruina"
 
-class LORItemData(NamedTuple):
-    category: str
-    code: int
-    item_type: ItemClassification = ItemClassification.filler
-    weight: Optional[int] = None
+class LORItemData:
+    name: str
+    amount: int
+    type: ItemClassification
+    id: int
 
-items: Dict[str, str] = {
-    # Library
-    # Total - 10 (Up to 9 in a run)
-    "Floor of General Works":                                           "Floor",
-    "Floor of History":                                                 "Floor",
-    "Floor of Technological Sciences":                                  "Floor",
-    "Floor of Literature":                                              "Floor",
-    "Floor of Art":                                                     "Floor",
-    "Floor of Natural Sciences":                                        "Floor",
-    "Floor of Language":                                                "Floor",
-    "Floor of Social Sciences":                                         "Floor",
-    "Floor of Philosophy":                                              "Floor",
-    "Floor of Religion":                                                "Floor",
- 
-    # Total - 50 (10 x 5) 
-    "Floor of General Works Abnormality Pages":                         "AbnoPages",
-    "Floor of History Abnormality Pages":                               "AbnoPages",
-    "Floor of Technological Sciences Abnormality Pages":                "AbnoPages",
-    "Floor of Literature Abnormality Pages":                            "AbnoPages",
-    "Floor of Art Abnormality Pages":                                   "AbnoPages",
-    "Floor of Natural Sciences Abnormality Pages":                      "AbnoPages",
-    "Floor of Language Abnormality Pages":                              "AbnoPages",
-    "Floor of Social Sciences Abnormality Pages":                       "AbnoPages",
-    "Floor of Philosophy Abnormality Pages":                            "AbnoPages",
-    "Floor of Religion Abnormality Pages":                              "AbnoPages",
- 
-    # Total - 39 (10 x 4; Each floor starts with 1, Philosophy starts with 2, one of which is locked Binah)
-    "Floor of General Works Librarian":                                 "Librarian",
-    "Floor of History Librarian":                                       "Librarian",
-    "Floor of Technological Sciences Librarian":                        "Librarian",
-    "Floor of Literature Librarian":                                    "Librarian",
-    "Floor of Art Librarian":                                           "Librarian",
-    "Floor of Natural Sciences Librarian":                              "Librarian",
-    "Floor of Language Librarian":                                      "Librarian",
-    "Floor of Social Sciences Librarian":                               "Librarian",
-    "Floor of Philosophy Librarian":                                    "Librarian",
-    "Floor of Religion Librarian":                                      "Librarian",
- 
-    # Total - 50 (10 x 5) 
-    "Floor of General Works EGO Page":                                  "EGOPage",
-    "Floor of History EGO Page":                                        "EGOPage",
-    "Floor of Technological Sciences EGO Page":                         "EGOPage",
-    "Floor of Literature EGO Page":                                     "EGOPage",
-    "Floor of Art EGO Page":                                            "EGOPage",
-    "Floor of Natural Sciences EGO Page":                               "EGOPage",
-    "Floor of Language EGO Page":                                       "EGOPage",
-    "Floor of Social Sciences EGO Page":                                "EGOPage",
-    "Floor of Philosophy EGO Page":                                     "EGOPage",
-    "Floor of Religion EGO Page":                                       "EGOPage",
- 
-    # Progression Stuff
-    "Binah":                                                            "Progression",
-    "Black Silence":                                                    "Progression",
-}
+    def __init__(self, name: str, amount: int = 1, type: ItemClassification = ItemClassification.progression, id: int = None):
+        self.name = name
+        self.amount = amount
+        self.type = type
+        self.id = id
+        
 
-useful = {
-    "Bonus Passive Attribute Point":                                    "Useful",
-    "Book of Everything":                                               "Useful",
-}
+# All those types of items have a "type id" (in brackets) that is put in their ids to differentiate on the client
+# Reception unlock items have a fixed type id of 15 (Created in run-time)
 
-item_table = {}
+# [0] Floor unlocks. Total - 10. Up to 9 in a run.
+floors: list[LORItemData] = [
+    LORItemData("Floor of History"),
+    LORItemData("Floor of Technological Sciences"),
+    LORItemData("Floor of Literature"),
+    LORItemData("Floor of Art"),
+    LORItemData("Floor of Natural Sciences"),
+    LORItemData("Floor of Language"),
+    LORItemData("Floor of Social Sciences"),
+    LORItemData("Floor of Philosophy"),
+    LORItemData("Floor of Religion"),
+    LORItemData("Floor of General Works"),
+]
 
-i = 0
-for j, v in items.items():
-    item_table[j] = LORItemData(v, i, ItemClassification.progression)
-    i += 1
+# [1] Respective Floor's Abno Pages. Total - 50. 5 per Floor.
+abno_pages: list[LORItemData] = [
+    LORItemData("Malkuth Abnormality Pages", 5),
+    LORItemData("Yesod Abnormality Pages", 5),
+    LORItemData("Hod Abnormality Pages", 5),
+    LORItemData("Netzach Abnormality Pages", 5),
+    LORItemData("Tiphereth Abnormality Pages", 5),
+    LORItemData("Gebura Abnormality Pages", 5),
+    LORItemData("Chesed Abnormality Pages", 5),
+    LORItemData("Binah Abnormality Pages", 5),
+    LORItemData("Hokma Abnormality Pages", 5),
+    LORItemData("Keter Abnormality Pages", 5),
+]
 
-for j, v in useful.items():
-    item_table[j] = LORItemData(v, i, ItemClassification.useful)
-    i += 1
+# [2] Respective Floor's EGO Pages. Total - 50. 5 per Floor.
+ego: list[LORItemData] = [
+    LORItemData("Malkuth EGO Page", 5),
+    LORItemData("Yesod EGO Page", 5),
+    LORItemData("Hod EGO Page", 5),
+    LORItemData("Netzach EGO Page", 5),
+    LORItemData("Tiphereth EGO Page", 5),
+    LORItemData("Gebura EGO Page", 5),
+    LORItemData("Chesed EGO Page", 5),
+    LORItemData("Binah EGO Page", 5),
+    LORItemData("Hokma EGO Page", 5),
+    LORItemData("Keter EGO Page", 5),
+]
+
+# [3] Respective Floor's Librarians. Total - 39. 4 per Floor. 3 for Binah Floor, as it starts with locked Binah and a nugget
+librarians: list[LORItemData] = [
+    LORItemData("Malkuth Librarian", 4),
+    LORItemData("Yesod Librarian", 4),
+    LORItemData("Hod Librarian", 4),
+    LORItemData("Netzach Librarian", 4),
+    LORItemData("Tiphereth Librarian", 4),
+    LORItemData("Gebura Librarian", 4),
+    LORItemData("Chesed Librarian", 4),
+    LORItemData("Binah Librarian", 3),
+    LORItemData("Hokma Librarian", 4),
+    LORItemData("Keter Librarian", 4),
+]
+
+# [4] Book items that player can get
+books: list[LORItemData] = [
+    LORItemData("Book of Everything", 0, id=123456, type=ItemClassification.skip_balancing)
+]
+
+# Those are each own list just for the automation purposes
+passive = [LORItemData("Passive Attribution Point", 0)] # [5]
+binah = [LORItemData("Binah")] # [6]
+roland = [LORItemData("The Black Silence's Page")] # [7]
+
+
+
+# Compile everything into one list
+item_list: list[LORItemData] = []
+item_dict: dict[str, LORItemData] = {}
+
+t = 0
+for l in [floors, abno_pages, ego, librarians, books, passive, binah, roland]:
+    id = 0
+    for i in l:
+        i.id = (t << 28 | (i.id if i.id != None else id))
+        item_list.append(i)
+        item_dict[i.name] = i
+        id += 1
+    
+    t += 1
