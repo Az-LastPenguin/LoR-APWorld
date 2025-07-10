@@ -1,104 +1,139 @@
-from typing import Dict, NamedTuple, Optional
+from dataclasses import dataclass
+from typing import Literal
 from BaseClasses import Item, ItemClassification
+from .gamedata.books import books
+
+# Items have types (denoted by different classes with type_ids). Some items have fixed amount of copies
+# type_ids are converted to ints when creating ids for them to then send to clients
 
 class LORItem(Item):
     game: str = "Library of Ruina"
 
+item_types = ["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"]
+@dataclass
 class LORItemData:
-    name: str
-    amount: int
-    type: ItemClassification
     id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"]
+    copies: int = 1
+    type: ItemClassification = ItemClassification.progression
 
-    def __init__(self, name: str, amount: int = 1, type: ItemClassification = ItemClassification.progression, id: int = None):
-        self.name = name
-        self.amount = amount
-        self.type = type
-        self.id = id
-        
+    def __post_init__(self):
+        self.id = (item_types.index(self.type_id) << 28 | self.id)
 
-# All those types of items have a "type id" (in brackets) that is put in their ids to differentiate on the client
-# Reception unlock items have a fixed type id of 15 (Created in run-time)
+@dataclass
+class FloorUnlockItem(LORItemData):
+    id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "FloorUnlock"
+    copies = 1
+    type = ItemClassification.progression
 
-# [0] Floor unlocks. Total - 10. Up to 9 in a run.
-floors: list[LORItemData] = [
-    LORItemData("Floor of History"),
-    LORItemData("Floor of Technological Sciences"),
-    LORItemData("Floor of Literature"),
-    LORItemData("Floor of Art"),
-    LORItemData("Floor of Natural Sciences"),
-    LORItemData("Floor of Language"),
-    LORItemData("Floor of Social Sciences"),
-    LORItemData("Floor of Philosophy"),
-    LORItemData("Floor of Religion"),
-    LORItemData("Floor of General Works"),
+@dataclass
+class AbnoPagesItem(LORItemData):
+    id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "AbnoPages"
+    copies = 5
+    type = ItemClassification.progression_skip_balancing
+
+@dataclass
+class EgoPageItem(LORItemData):
+    id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "EgoPage"
+    copies = 5
+    type = ItemClassification.progression_skip_balancing
+
+@dataclass
+class LibrarianItem(LORItemData):
+    id: int
+    name: str
+    copies: int
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Librarian"
+    type = ItemClassification.progression
+
+@dataclass
+class BookItem(LORItemData):
+    id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Book"
+    copies: int = 0
+    type = ItemClassification.progression_skip_balancing
+
+@dataclass
+class OtherItem(LORItemData):
+    id: int
+    name: str
+    type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Other"
+    copies: int = 0
+    type = ItemClassification.filler
+
+
+item_list: list[LORItemData] = [
+    # Floor Unlocks. Total - 10. Up to 9 per run.
+    FloorUnlockItem(id=0, name="Floor of History"),
+    FloorUnlockItem(id=1, name="Floor of Technological Sciences"),
+    FloorUnlockItem(id=2, name="Floor of Literature"),
+    FloorUnlockItem(id=3, name="Floor of Art"),
+    FloorUnlockItem(id=4, name="Floor of Natural Sciences"),
+    FloorUnlockItem(id=5, name="Floor of Language"),
+    FloorUnlockItem(id=6, name="Floor of Social Sciences"),
+    FloorUnlockItem(id=7, name="Floor of Philosophy"),
+    FloorUnlockItem(id=8, name="Floor of Religion"),
+    FloorUnlockItem(id=9, name="Floor of General Works"),
+
+    # Floor Abno Pages. Total - 50. 5 per Floor.
+    AbnoPagesItem(id=0, name="Malkuth Abnormality Pages"),
+    AbnoPagesItem(id=1, name="Yesod Abnormality Pages"),
+    AbnoPagesItem(id=2, name="Hod Abnormality Pages"),
+    AbnoPagesItem(id=3, name="Netzach Abnormality Pages"),
+    AbnoPagesItem(id=4, name="Tiphereth Abnormality Pages"),
+    AbnoPagesItem(id=5, name="Gebura Abnormality Pages"),
+    AbnoPagesItem(id=6, name="Chesed Abnormality Pages"),
+    AbnoPagesItem(id=7, name="Binah Abnormality Pages"),
+    AbnoPagesItem(id=8, name="Hokma Abnormality Pages"),
+    AbnoPagesItem(id=9, name="Keter Abnormality Pages"),
+
+    # Floor EGO Pages. Total - 50. 5 per Floor.
+    EgoPageItem(id=0, name="Malkuth EGO Page"),
+    EgoPageItem(id=1, name="Yesod EGO Page"),
+    EgoPageItem(id=2, name="Hod EGO Page"),
+    EgoPageItem(id=3, name="Netzach EGO Page"),
+    EgoPageItem(id=4, name="Tiphereth EGO Page"),
+    EgoPageItem(id=5, name="Gebura EGO Page"),
+    EgoPageItem(id=6, name="Chesed EGO Page"),
+    EgoPageItem(id=7, name="Binah EGO Page"),
+    EgoPageItem(id=8, name="Hokma EGO Page"),
+    EgoPageItem(id=9, name="Keter EGO Page"),
+
+    # Floor Librarians. Total - 40. 4 per Floor. 3 for Binah.
+    LibrarianItem(id=0, name="Malkuth Librarian", copies=4),
+    LibrarianItem(id=1, name="Yesod Librarian", copies=4),
+    LibrarianItem(id=2, name="Hod Librarian", copies=4),
+    LibrarianItem(id=3, name="Netzach Librarian", copies=4),
+    LibrarianItem(id=4, name="Tiphereth Librarian", copies=4),
+    LibrarianItem(id=5, name="Gebura Librarian", copies=4),
+    LibrarianItem(id=6, name="Chesed Librarian", copies=4),
+    LibrarianItem(id=7, name="Binah Librarian", copies=3),
+    LibrarianItem(id=8, name="Hokma Librarian", copies=4),
+    LibrarianItem(id=9, name="Keter Librarian", copies=4),
+
+    # Books. Total Amount varies.
+    BookItem(id=123456, name="Book of Everything", type=ItemClassification.filler), # Could i interest you in everything all of the time?
+    # Vanilla Books, always one of each
+    *[BookItem(id=book.id, name=book.name, copies=1) for book in books],
+
+    # Other. Total amount varies.
+    OtherItem(id=0, name="Passive Attribution Points"), # Amount configurable
+    OtherItem(id=1, name="Passive Limits Break"), # Amount configurable
+    OtherItem(id=2, name="Emotion Limits Break"), # Amount configurable
+
+    OtherItem(id=3, name="Binah", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount
+    OtherItem(id=4, name="The Black Silence's Page", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount
 ]
 
-# [1] Respective Floor's Abno Pages. Total - 50. 5 per Floor.
-abno_pages: list[LORItemData] = [
-    LORItemData("Malkuth Abnormality Pages", 5),
-    LORItemData("Yesod Abnormality Pages", 5),
-    LORItemData("Hod Abnormality Pages", 5),
-    LORItemData("Netzach Abnormality Pages", 5),
-    LORItemData("Tiphereth Abnormality Pages", 5),
-    LORItemData("Gebura Abnormality Pages", 5),
-    LORItemData("Chesed Abnormality Pages", 5),
-    LORItemData("Binah Abnormality Pages", 5),
-    LORItemData("Hokma Abnormality Pages", 5),
-    LORItemData("Keter Abnormality Pages", 5),
-]
-
-# [2] Respective Floor's EGO Pages. Total - 50. 5 per Floor.
-ego: list[LORItemData] = [
-    LORItemData("Malkuth EGO Page", 5),
-    LORItemData("Yesod EGO Page", 5),
-    LORItemData("Hod EGO Page", 5),
-    LORItemData("Netzach EGO Page", 5),
-    LORItemData("Tiphereth EGO Page", 5),
-    LORItemData("Gebura EGO Page", 5),
-    LORItemData("Chesed EGO Page", 5),
-    LORItemData("Binah EGO Page", 5),
-    LORItemData("Hokma EGO Page", 5),
-    LORItemData("Keter EGO Page", 5),
-]
-
-# [3] Respective Floor's Librarians. Total - 39. 4 per Floor. 3 for Binah Floor, as it starts with locked Binah and a nugget
-librarians: list[LORItemData] = [
-    LORItemData("Malkuth Librarian", 4),
-    LORItemData("Yesod Librarian", 4),
-    LORItemData("Hod Librarian", 4),
-    LORItemData("Netzach Librarian", 4),
-    LORItemData("Tiphereth Librarian", 4),
-    LORItemData("Gebura Librarian", 4),
-    LORItemData("Chesed Librarian", 4),
-    LORItemData("Binah Librarian", 3),
-    LORItemData("Hokma Librarian", 4),
-    LORItemData("Keter Librarian", 4),
-]
-
-# [4] Book items that player can get
-books: list[LORItemData] = [
-    LORItemData("Book of Everything", 0, id=123456, type=ItemClassification.skip_balancing)
-]
-
-# Those are each own list just for the automation purposes
-passive = [LORItemData("Passive Attribution Point", 0)] # [5]
-binah = [LORItemData("Binah")] # [6]
-roland = [LORItemData("The Black Silence's Page")] # [7]
-
-
-
-# Compile everything into one list
-item_list: list[LORItemData] = []
-item_dict: dict[str, LORItemData] = {}
-
-t = 0
-for l in [floors, abno_pages, ego, librarians, books, passive, binah, roland]:
-    id = 0
-    for i in l:
-        i.id = (t << 28 | (i.id if i.id != None else id))
-        item_list.append(i)
-        item_dict[i.name] = i
-        id += 1
-    
-    t += 1
+items_by_category: dict[str, list[LORItemData]] = {item_type: [item for item in item_list if item.type_id == item_type] for item_type in item_types}
+items_by_id: dict[int, LORItemData] = {item.id: item for item in item_list}
+items_by_name: dict[str, LORItemData] = {item.name: item for item in item_list}
+items_name_to_id: dict[str, int] = {item.name: item.id for item in item_list}

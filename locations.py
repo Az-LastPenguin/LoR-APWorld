@@ -1,367 +1,123 @@
-from BaseClasses import Location
-from typing import NamedTuple
 import random
+from dataclasses import dataclass
+from BaseClasses import Location, ItemClassification
+from .gamedata.receptions import ReceptionGroupInfo, vanilla_reception_groups, receptions, receptions_dict
+from .gamedata.abnormalities import Floor, FloorStage, floors, floor_stages
+from .gamedata.books import books
+from .items import items_by_name
 
 class LORLocation(Location):
     game: str = "Library of Ruina"
 
-
-class StageInfo:
+@dataclass
+class LORLocationData:
     id: int
     name: str
-    checks: int
-    chapter: int
-    next: list[int] # For the vanilla map
-    librarians: int
 
-    locations: dict[str, int]
+reception_locations: list[LORLocationData] = []
+for r in receptions:
+    for i in range(r.checks):
+        reception_locations.append(LORLocationData(r.id | (i << 28), r.name+" ("+str(i+1)+")"))
 
-    def __init__(self, id: int, name: str, checks: int = 1, chapter: int = 0, next: list[int] = [], librarians: int = 1):
-        self.id = id
-        self.name = name
-        self.checks = checks
-        self.chapter = chapter
-        self.next = next
-        self.librarians = librarians
+abno_locations: list[LORLocationData] = []
+for s in floor_stages:
+    for i in range(s.checks):
+        abno_locations.append(LORLocationData(r.id | (i << 28), s.name+" ("+str(i+1)+")"))
 
-        self.locations = {}
+all_locations = [location for location in [*reception_locations, *abno_locations]]
+locations_id_to_name = {location.id: location.name for location in all_locations}
+locations_name_to_id = {location.name: location.id for location in all_locations}
+
+def setup_locations(random: random.Random, reception_option: int, abno_option: int, realization_option: int):
+    reception_groups = []
+    reception_tree = []
+    floors_list = []
+
+    # Setup Receptions
+    if reception_option == 0:
+        reception_groups = vanilla_reception_groups.copy()
+    elif reception_option == 1:
+        reception_groups, reception_tree = generate_reception_tree(random)
+        reception_groups.extend([group for group in vanilla_reception_groups if group.chapter == 8])
+
+
+    # Randomize books required for the receptions if needed
+    book_list = books.copy()
+    # Each reception requires atleast one book
+    for g in reception_groups:
+        for r in g.receptions:
+            if r == 2:
+                continue
+            
+            reception = receptions_dict[r]
+            reception.req_books.append(book_list.pop(random.randint(0, len(book_list)-1)).id)
+
+    # Cut down like 10% of the books that will be required just to make some more free space in the item pool
+    for i in range(len(book_list)//10):
+        book = book_list.pop(random.randint(0, len(book_list)-1))
+        # Also change them from progression to filler since they're no longer required in the progression
+        items_by_name[book.name].type = ItemClassification.filler
+
+    # Some receptions may require more than one book
+    receptions = []
+    for g in [group for group in reception_groups if group.chapter > 2]:
+        receptions.extend(g.receptions)
+
+    while len(book_list) > 0:
+        rid = receptions[random.randint(0, len(receptions)-1)]
+        reception = receptions_dict[rid]
+        reception.req_books.append(book_list.pop(random.randint(0, len(book_list)-1)).id)
+
+        if len(reception.req_books) == 3:
+            receptions.remove(rid)
+
+
+    # Abnos
+    floors_list = floors.copy()
+    if abno_option == 1:
+        for f in floors_list:
+            random.shuffle(f.abno_stages)
+    elif abno_option == 2:
+        stages = []
+        for f in floors_list:
+            stages.extend(f.abno_stages)
         
-        for i in range(self.checks):
-            self.locations[self.name+" ("+str(i+1)+")"] = self.id | (i << 28)
+        random.shuffle(stages)
 
+        for f in floors_list:
+            abnos = len(f.abno_stages)
+            f.abno_stages.clear()
 
-canard: list[StageInfo] = [
-    # Receptions
-    StageInfo(2, "Rats", 2, 1, [3]),
-    StageInfo(3, "Yun's Office Fixers", 2, 1, [4]),
-    StageInfo(4, "Yun's Office Rookie", 2, 1, [5]),
-    StageInfo(5, "Yun's Office", 2, 1, [6]),
-    StageInfo(6, "Brotherhood of Iron", 2, 1, [7]),
-    StageInfo(7, "Hook Office", 2, 1, [10001, 100001, 100002, 100003]),
-]
-
-myth: list[StageInfo] = [
-    # Receptions
-    StageInfo(10001, "Pierre's Bistro", 2, 2, [10002]),
-    StageInfo(10002, "Streetlight Office", 2, 2, [10003]),
-    StageInfo(10003, "Lulu of Streetlight", 2, 2, [20001, 100004, 100005, 100006, 100007, 100008]),
-
-    # General Receptions
-    StageInfo(100003, "Urban Myth-class Syndicate", 2, 2),
-    StageInfo(100002, "Hook Office Remnants", 2, 2),
-    StageInfo(100001, "Backstreets Butchers", 2, 2),
-]
-
-legend: list[StageInfo] = [
-    # Receptions
-    StageInfo(20001, "Zwei Crewmembers", 2, 3, [20002]),
-    StageInfo(20002, "Zwei Association Ⅰ", 2, 3, [20003]),
-    StageInfo(20003, "Zwei Association Ⅱ", 2, 3, [20004, 20005, 30002, 30003, 100009, 100010, 100014]),
-    StageInfo(20004, "Molar Office", 2, 3, [30004, 100009, 100010, 100014]),
-    StageInfo(20005, "Stray Dogs", 2, 3, [30001, 100009, 100010, 100014]),
-
-    # General Receptions
-    StageInfo(100004, "Grade 8 Fixers", 2, 3),
-    StageInfo(100005, "Grade 7 Fixers", 2, 3),
-    StageInfo(100006, "Urban Legend-class Office", 2, 3),
-    StageInfo(100007, "Urban Legend-class Syndicate", 2, 3),
-    StageInfo(100008, "Axe Gang", 2, 3),
-]
-
-plague: list[StageInfo] = [
-    # Receptions
-    StageInfo(30001, "The Carnival", 2, 4, [30006]),
-    StageInfo(30002, "Full-Stop Office", 2, 4, [30007]),
-    StageInfo(30003, "Dawn Office", 2, 4, [30008]),
-    StageInfo(30004, "Gaze Office", 2, 4, [30005]),
-    StageInfo(30005, "Tomerry", 3, 4, [40002, 100011, 100012]),
-    StageInfo(30006, "Kurokumo Clan", 2, 4, [40004, 100011, 100012]),
-    StageInfo(30007, "Musicians of Bremen", 2, 4, [40001, 100011, 100012]),
-    StageInfo(30008, "Wedge Office", 3, 4, [40003, 100011, 100012]),
-
-    # General Receptions
-    StageInfo(100009, "Rusted Chains", 2, 4),
-    StageInfo(100010, "Workshop-affiliated Fixers", 2, 4),
-    StageInfo(100014, "Jeong’s Office", 2, 4),
-]
-
-nightmare: list[StageInfo] = [
-    # Receptions
-    StageInfo(40001, "Shi Association", 3, 5, [40007]),
-    StageInfo(40002, "Puppets", 3, 5, [40006]),
-    StageInfo(40003, "The 8 o’Clock Circus", 3, 5, [40008]),
-    StageInfo(40004, "Sweepers", 3, 5, [40005]),
-    StageInfo(40005, "Index Proselytes", 3, 5, [50003, 100013, 100015, 100016, 100017, 100018, 100019]),
-    StageInfo(40006, "WARP Cleanup Crew", 3, 5, [50005, 100013, 100015, 100016, 100017, 100018, 100019]),
-    StageInfo(40007, "Smiling Faces", 3, 5, [50006, 100013, 100015, 100016, 100017, 100018, 100019]),
-    StageInfo(40008, "The Crying Children", 4, 5, [50001, 100013, 100015, 100016, 100017, 100018, 100019], librarians=2),
+            for i in range(abnos):
+                f.abno_stages.append(stages.pop(0))
     
-    # General Receptions
-    StageInfo(100011, "Seven Association", 2, 5),
-    StageInfo(100012, "Blade Lineage", 2, 5),
-]
-
-sotc: list[StageInfo] = [
-    # Receptions
-    StageInfo(50001, "Liu Association Section 2", 2, 6, [50002]),
-    StageInfo(50002, "Liu Association Section 2 II", 2, 6, [50008]),
-    StageInfo(50003, "The Thumb", 2, 6, [50004]),
-    StageInfo(50004, "The Thumb II", 2, 6, [50007]),
-    StageInfo(50005, "Cane Office", 3, 6, [50010]),
-    StageInfo(50006, "The Blue Reverberation", 3, 6, [50009]),
-    StageInfo(50007, "Index Proxies", 3, 6, [50014]),
-    StageInfo(50008, "Liu Association Section 1", 3, 6, [50013]),
-    StageInfo(50009, "The Red Mist", 4, 6, [50012]),
-    StageInfo(50010, "R Corp.", 3, 6, [50011]),
-    StageInfo(50011, "R Corp. II", 3, 6, [60001]),
-    StageInfo(50012, "The Purple Tear", 3, 6, [60001]),
-    StageInfo(50013, "Xiao", 4, 6, [60001]),
-    StageInfo(50014, "얀샋ㄷ요무", 4, 6, [60001]),
-
-    # General Receptions
-    StageInfo(100013, "Dong-hwan the Grade 1 Fixer", 2, 6),
-    StageInfo(100015, "Night Awls", 2, 6),
-    StageInfo(100016, "The Udjat", 2, 6),
-    StageInfo(100017, "Mirae Life Insurance", 2, 6),
-    StageInfo(100018, "Leaflet Workshop", 2, 6),
-    StageInfo(100019, "Bayard", 2, 6),
-]
-
-impurity: list[StageInfo] = [
-    # Receptions
-    StageInfo(60001, "Hana Association", 3, 7, [60002]),
-    StageInfo(60002, "Oliver", 4, 7),
-]
-
-chapters: list[list[StageInfo]] = [
-    canard,
-    myth,
-    legend,
-    plague,
-    nightmare,
-    sotc,
-    impurity
-]
-
-
-class FloorInfo:
-    abnos: list[StageInfo]
-    realization: StageInfo
-
-    def __init__(self, abnos: list[StageInfo], realization: StageInfo):
-        self.abnos = abnos
-        self.realization = realization
-
-malkuth = FloorInfo(
-    [
-        StageInfo(201001, "Scorched Girl", 3),
-        StageInfo(201002, "Happy Teddy Bear", 3),
-        StageInfo(201003, "Fairy Festival", 3),
-        StageInfo(201004, "Queen Bee", 3)
-    ],
-
-    StageInfo(201005, "Malkuth Realization", 8)
-)
-
-yesod = FloorInfo(
-    [
-        StageInfo(202001, "Forsaken Murderer", 3),
-        StageInfo(202002, "All-Around Helper", 3),
-        StageInfo(202003, "Singing Machine", 3),
-        StageInfo(202004, "The Funeral of the Dead Butterflies", 3)
-    ],
-
-    StageInfo(202005, "Yesod Realization", 8)
-)
-
-hod = FloorInfo(
-    [
-        StageInfo(203001, "Today’s Shy Look", 3),
-        StageInfo(203002, "The Red Shoes", 3),
-        StageInfo(203003, "Spider Bud", 3),
-        StageInfo(203004, "Laetitia", 3, librarians=2)
-    ],
-
-    StageInfo(203005, "Hod Realization", 8)
-)
-
-netzach = FloorInfo(
-    [
-        StageInfo(204001, "Fragment of the Universe", 3),
-        StageInfo(204002, "Child of the Galaxy", 3),
-        StageInfo(204003, "Porccubus", 3),
-        StageInfo(204004, "Alriune", 3)
-    ],
-
-    StageInfo(204005, "Netzach Realization", 8)
-)
-
-tiphereth = FloorInfo(
-    [
-        StageInfo(205001, "The Queen of Hatred", 3),
-        StageInfo(205002, "The Knight of Despair", 3),
-        StageInfo(205003, "The King of Greed", 3),
-        StageInfo(205004, "The Servant of Wrath", 3)
-    ],
-
-    StageInfo(205005, "Tiphereth Realization", 8, librarians=4)
-)
-
-gebura = FloorInfo(
-    [
-        StageInfo(206001, "Little Red Riding Hooded Mercenary", 3),
-        StageInfo(206002, "Big and Will be Bad Wolf", 3),
-        StageInfo(206003, "Mountain of Smiling Bodies", 3),
-        StageInfo(206004, "Nosferatu", 3)
-    ],
-
-    StageInfo(206005, "Gebura Realization", 8)
-)
-
-chesed = FloorInfo(
-    [
-        StageInfo(207001, "Scarecrow Searching for Wisdom", 3),
-        StageInfo(207002, "Warm-hearted Woodsman", 3),
-        StageInfo(207003, "The Road Home & Scaredy Cat", 3, librarians=2),
-        StageInfo(207004, "Ozma", 3)
-    ],
-
-    StageInfo(207005, "Chesed Realization", 8, librarians=5)
-)
-
-binah = FloorInfo(
-    [
-        StageInfo(208001, "Big Bird", 3, librarians=2),
-        StageInfo(208002, "Punishing Bird", 3),
-        StageInfo(208003, "Judgement Bird", 3),
-    ],
-
-    StageInfo(208004, "Binah Realization", 11)
-)
-
-hokma = FloorInfo(
-    [
-        StageInfo(209001, "The Burrowing Heaven", 3),
-        StageInfo(209002, "The Price of Silence", 3, librarians=2),
-        StageInfo(209003, "Blue Star", 3),
-    ],
-
-    StageInfo(209004, "Hokma Realization", 11)
-)
-
-keter = FloorInfo(
-    [
-        StageInfo(210001, "Bloodbath", 3),
-        StageInfo(210002, "Heart of Aspiration", 3),
-        StageInfo(210003, "Pinocchio", 3),
-        StageInfo(210004, "The Snow Queen", 3)
-    ],
-
-    StageInfo(210009, "Keter Realization", 8)
-)
-
-floors = [
-    malkuth,
-    yesod,
-    hod,
-    netzach,
-    tiphereth,
-    gebura,
-    chesed,
-    binah,
-    hokma,
-    keter
-]
-
-
-
-endgoals = [ # NO progression items
-    StageInfo(70001, "[Ensemble] The Crying Children", 2),
-    StageInfo(70002, "[Ensemble] The Church of Gears", 2),
-    StageInfo(70003, "[Ensemble] The Eighth Chef", 2),
-    StageInfo(70004, "[Ensemble] The Musicians of Bremen", 2),
-    StageInfo(70005, "[Ensemble] The 8 o’Clock Circus", 2),
-    StageInfo(70006, "[Ensemble] L’heure du Loup", 2),
-    StageInfo(70007, "[Ensemble] The Puppeteer", 2),
-    StageInfo(70008, "[Ensemble] The Blood-red Night", 2),
-    StageInfo(70009, "[Ensemble] Yesterday’s Promise", 2),
-    StageInfo(70010, "[Ensemble] The Blue Reverberation", 2),
-
-    StageInfo(60003, "The Black Silence", 5),
-    StageInfo(60004, "The Reverberation Ensemble Distorted", 5),
-]
-
-
-all_nodes = [
-    # Every floors abno fight + realization
-    *[l for sub in ([*floor.abnos, floor.realization] for floor in floors) for l in sub],
-
-    # Every Reception
-    *[r for sub in (chapter for chapter in chapters) for r in sub],
-
-    # End Goals
-    *endgoals
-]
-
-
-location_list: dict[str, int] = {}
-
-for n in all_nodes:
-    location_list.update(n.locations)
-
-
-
-
-
-
-# This part is the randomization of suppressions
-def randomize_suppresions(option: int, random: random.Random) -> list[FloorInfo]:
-    result_floors = floors.copy()
-
-    if option == 1:
-        for f in result_floors:
-            random.shuffle(f.abnos)
-    elif option == 2 or option == 3:
-        all_abnos = []
-        for f in result_floors:
-            all_abnos.extend(f.abnos)
+    # Realization
+    if realization_option == 1:
+        stages = []
+        for f in floors_list:
+            stages.append(f.realization_stage)
         
-        random.shuffle(all_abnos)
+        random.shuffle(stages)
 
-        for f in result_floors:
-            total = len(f.abnos)
-            f.abnos.clear()
+        for f in floors_list:
+            f.realization_stage = stages.pop(0)
 
-            for i in range(total):
-                f.abnos.append(all_abnos.pop(0))
-            
-        if option == 3:
-            all_realizations = []
-            for f in result_floors:
-                all_realizations.append(f.realization)
-            
-            random.shuffle(all_realizations)
+    return (reception_groups, reception_tree, floors_list)
 
-            for f in result_floors:
-                f.realization = all_realizations.pop(0)
-
-    return result_floors
-
-
-# This part is the generation of the reception tree
+# For reception tree randomization
 class MapNode():
-    id: int # Node's id
-    receptions: list[StageInfo] # Receptions in this node
+    chapter: int # Node's chapter (used in generation only)
+    receptions: list[int] # Receptions in this node
+    expect_receptions: int # How much receptions is expected to be put in this node (used in generation only)
     prev: list['MapNode'] # Nodes that go after this one
     next: list['MapNode'] # Nodes that go before this one
-
-    # Other stuff used for generation
     X: int # aka Column
     Y: int # aka Row / Depth
 
-    def __init__(self, id: int, X: int = 0, Y: int = 0):
-        self.id = id
+    def __init__(self, chapter: int, X: int, Y: int):
+        self.chapter = chapter
         self.receptions = []
+        self.expect_receptions = 0
         self.prev = []
         self.next = []
         self.X = X
@@ -376,11 +132,6 @@ class MapNode():
     def addnext(self, next: 'MapNode') -> 'MapNode':
         next.prev.append(self)
         self.next.append(next)
-
-        return self
-
-    def addreception(self, reception: StageInfo) -> 'MapNode':
-        self.receptions.append(reception)
 
         return self
     
@@ -404,199 +155,142 @@ class MapNode():
         intdata = (receptions << 38) | (next << 17) | (pos << 7) | self.id 
 
         return intdata.to_bytes(14, byteorder='big')
-
-
-def generate_reception_tree(option: int, random: random.Random) -> list[MapNode]:
-    if option == 2 or option == 3:
-        return generate_random_tree(random)
-    else:
-        return generate_vanilla_tree()
-
-def generate_vanilla_tree() -> list[MapNode]:
-    # The tree created here is not 1:1 vanilla as i don't want to add more properties to recereate it 1:1,
-    # but the connection order is still 1:1 behaviour (Some receptions like zwei aren't nested in single node)
-    all_receptions: list[StageInfo] = [r for sub in (chapter for chapter in chapters) for r in sub]
-    first = MapNode(0)
-    first.addreception(canard[0])
-    map: list[MapNode] = [first]
-    next: list[MapNode] = [first]
-    id = 1
-
-    while len(next) != 0:
-        cur: MapNode = next.pop(0)
-
-        for i in cur.receptions[0].next:
-            existing = [n for n in map if n.receptions[0].id == i]
-
-            if len(existing) == 0:
-                new = MapNode(id)
-                id += 1
-                new.addreception([r for r in all_receptions if r.id == i][0])
-                new.addprev(cur)
-                map.append(new)
-                next.append(new)
-            else:
-                existing[0].addprev(cur)
     
-    #for n in map:
-    #    print("Node "+str(n.id)+" - Reception: "+str(n.receptions[0].id)+"; Next: "+", ".join([str(r.id) for r in n.next]))
+@dataclass
+class ChapterSettings:
+    chapter: int
+    max_width: int
+    min_height: int
+    max_height: int
+    branch_chance: int
 
-    return map
-
-def generate_random_tree(random: random.Random) -> list[MapNode]:
-    print("------------[TREE GENERATION START]------------")
-    print("------------[GENERATING BRANCHES]------------")
+def generate_reception_tree(random: random.Random):
+    #print("------------[GENERATION START]------------")
+    #print("------------[GENERATING BRANCHES]------------")
     # ---[STEP 1]---
-    # Generate the branches. Main/Central branch is 30 in depth/height, everything to the left/right is -2 from previous
-    # 1.1. Generate X = 0 branch (Central)
-    id = 0
-    map: list[MapNode] = []
-    cur_x = 0
-    cur_y = 0
-    prev: MapNode = None
-    height = 30
-    for i in range(height):
-        new = MapNode(id, cur_x, cur_y)
-        id += 1
-        cur_y += 1
-        if prev != None:
-            prev.addnext(new)
-        prev = new
-        map.append(new)
+    # Generate tree of max width. Height is randomized and depends on each chapter's possible height.
+    # Main Branch at X = 0 nodes always have a connection to a node above itself if any
+    chapter_settings = [
+        ChapterSettings(chapter=1, max_width=3, min_height=2, max_height=3, branch_chance=30),
+        ChapterSettings(chapter=2, max_width=3, min_height=2, max_height=3, branch_chance=35),
+        ChapterSettings(chapter=3, max_width=5, min_height=2, max_height=3, branch_chance=50),
+        ChapterSettings(chapter=4, max_width=5, min_height=3, max_height=4, branch_chance=40),
+        ChapterSettings(chapter=5, max_width=5, min_height=3, max_height=4, branch_chance=30),
+        ChapterSettings(chapter=6, max_width=5, min_height=4, max_height=5, branch_chance=50),
+        ChapterSettings(chapter=7, max_width=3, min_height=2, max_height=3, branch_chance=30),
+    ]
+    start_node: MapNode = MapNode(1, 0, 0)
+    cur_x: int = 0
+    cur_y: int = 0
+    tree: list[MapNode] = [start_node]
+    all_receptions: list[int] = [r.id for r in receptions if r.chapter != 8]
+    total_receptions = len(all_receptions)
 
-    # 1.2. Generate left/right branches
-    while True:
-        cur_x -= 1
-        if height - 2 * -cur_x <= 0:
-            break
-
-        # To the left
-        prev = None
-        cur_y = -cur_x
-        for i in range(height - 2 * -cur_x):
-            new = MapNode(id, cur_x, cur_y)
-            id += 1
+    for cs in chapter_settings:
+        chapter_height = random.randint(cs.min_height, cs.max_height)
+        for i in range(chapter_height):
             cur_y += 1
-            if prev != None:
-                prev.addnext(new)
-            prev = new
-            map.append(new)
-        
-        # To the right
-        prev = None
-        cur_x *= -1
-        cur_y = cur_x
-        for i in range(height - 2 * cur_x):
-            new = MapNode(id, cur_x, cur_y)
-            id += 1
-            cur_y += 1
-            if prev != None:
-                prev.addnext(new)
-            prev = new
-            map.append(new)
+            cur_x = -(cs.max_width // 2)
+            for j in range(cs.max_width):
+                new = MapNode(cs.chapter, cur_x, cur_y)
+                prev_layer_nodes = [node for node in tree if node.X == 0 and node.Y == cur_y - 1] # Always either 0 or 1
+                if cur_x == 0 and len(prev_layer_nodes) > 0:
+                    prev_layer_nodes[0].addnext(new)
+                cur_x += 1
+                tree.append(new)
 
-        cur_x *= -1
 
-    print("------------[GENERATING RANDOM CONNECTIONS]------------")
+    #print("------------[GENERATING CONNECTIONS]------------")
     # ---[STEP 2]---
-    # Generate random connections
-    for n in map:
-        possible_nodes = [n1 for n1 in map if (n1.X == n.X - 1 or n1.X == n.X + 1) and n1.Y == n.Y + 1]
+    # Generate random connections between nodes
+    for n in tree:
+        possible_nodes = [node for node in tree if (node.X >= n.X - 1 and node.X <= n.X + 1) and node.Y == n.Y + 1]
 
         for i in possible_nodes:
-            if random.random() <= 0.20:
+            if not n in i.prev and random.random() <= chapter_settings[n.chapter - 1].branch_chance * 0.01:
                 n.addnext(i)
 
-
-    print("------------[POPULATING]------------")
+    #print("------------[REMOVING BAD NODES]------------")
     # ---[STEP 3]---
-    # Populate nodes (put receptions there)
-    # 3.1. Put Rats as the first reception (forced)
-    map[0].addreception(chapters[0].pop(0))
+    # 3.1. Remove nodes that have no path going to them
+    for n in tree.copy():
+        if (n.X != 0 and n. Y != 0) and len(n.prev) == 0:
+            for i in n.next:
+                i.prev.remove(n)
+            tree.remove(n)
 
-    # 3.2. Randomize all other receptions and put them in one list 
-    all_stages: list[StageInfo] = []
-    for i in chapters:
-        random.shuffle(i)
-        all_stages.extend(i)
 
-    total = len(all_stages)
-    print("TOTAL: "+str(total + 1))
+    # 3.2. Remove dead-end nodes at max Y level (except the node at X = 0)
+    for n in [node for node in tree if node.Y == cur_y and node.X != 0]:
+        for i in n.prev:
+            i.next.remove(n)
+        tree.remove(n)
 
-    print("Put reception Rats in Node X: 0 Y: 0; Left: "+str(total))
 
-    # 3.3. Walk through the tree and put receptions there
-    queue: list[MapNode] = [map[0]]
+    # 3.3. If there is more than total_receptions nodes (65 is total amount of unique receptions in vanilla game) remove as much dead-end nodes as needed to get to total_receptions total nodes.
+    if len(tree) > total_receptions:
+        #print("------------[REMOVING EXCESS NODES]------------")
+        for i in range(len(tree) - total_receptions):
+            # Get all dead-end nodes
+            dead_ends = [node for node in tree if len(node.next) == 0 and node.X != 0]
+            # Select random dead-end node and remove it
+            n = dead_ends[random.randint(0, len(dead_ends) - 1)]
+            for j in n.prev:
+                j.next.remove(n)
+            tree.remove(n)
+
+
+    #print("------------[POPULATING]------------")
+    # ---[STEP 4]---
+    # Decide how much receptions should be put into each node and put them in
+    # 4.1. Set expected receptions to 1 for each node
+    for n in tree:
+        n.expect_receptions = 1
+
+    # 4.2. If there is less than total_receptions nodes then we can put more receptions in random nodes
+    if len(tree) < total_receptions:
+        for i in range (total_receptions - len(tree)):
+            nodes = [node for node in tree if node.expect_receptions < 3]
+            nodes[random.randint(0, len(nodes) - 1)].expect_receptions += 1
+
+    # 4.3. Put Rats Reception into the first node
+    tree[0].receptions.append(2)
+    all_receptions.remove(2)
+
+    # 4.4. Put receptions into every other node
+    queue: list[MapNode] = [tree[0], *tree[0].next]
 
     while len(queue) > 0:
         # Get current Node
         node = queue.pop(0)
 
-        if len(all_stages) == 0:
-            break
+        # Put receptions there
+        if len(node.receptions) < node.expect_receptions:
+            for i in range(node.expect_receptions - len(node.receptions)):
+                i = 0
+                while i < len(all_receptions)-1 and random.random() >= 0.5:
+                    i += 1
 
-        # Put reception there
-        if len(node.receptions) == 0:
-            # If there is no receptions, put one there and repeat this node
-            # Select a reception to be put on map
-            i = 0
-            while i < len(all_stages)-1 and random.random() >= 0.5:
-                i += 1
+                reception = all_receptions.pop(i)
 
-            reception = all_stages.pop(i)
+                node.receptions.append(reception)
+                queue.extend(node.next)
 
-            node.addreception(reception)
-            queue.append(node)
-            print("Put reception "+reception.name+" in Node X: "+str(node.X)+" Y: "+str(node.Y)+"; Left: "+str(len(all_stages)))
-        elif len(node.receptions) < 3 and random.random() <= 0.20:
-            # If there is a reception already, not more than 3, and chance procs, put another there
-            # Select a reception to be put on map
-            i = 0
-            while i < len(all_stages)-1 and random.random() >= 0.5:
-                i += 1
+    # Convert randomized tree into ReceptionGroupInfos for the server to process
+    queue: list[MapNode] = tree[0]
+    converted: dict[MapNode, ReceptionGroupInfo] = {}
+    i = 1
+    for n in tree:
+        converted[n] = ReceptionGroupInfo(id=i, chapter=n.chapter, prev_groups=[], next_groups=[], receptions=n.receptions)
+        i += 1
 
-            reception = all_stages.pop(i)
-
-            node.addreception(reception)
-            queue.append(node)
-            print("Put reception "+reception.name+" in Node X: "+str(node.X)+" Y: "+str(node.Y)+"; Left: "+str(len(all_stages)))
-        else:
-            # Else simply go to next nodes
-            for n in node.next:
-                queue.append(n)
-
-    # 3.4. Extension in case of not enough nodes?
-
+    for n in tree:
+        converted[n].next_groups = [converted[node].id for node in n.next]
+        converted[n].prev_groups = [converted[node].id for node in n.prev]
         
-    print("------------[CLEANING]------------")
-    # ---[STEP 4]---
-    # Remove garbage and stuff
-    # 4.1. Remove every node without a reception
-    for n in map.copy():
-        if len(n.receptions) == 0:
-            for i in n.prev:
-                i.next.remove(n)
+        # Set next group of the last group in the tree to 999 (workaround for finding last reception in the tree for logic)
+        if n.X == 0 and n.Y == cur_y:
+            converted[n].next_groups.append(999)
 
-            for i in n.next:
-                i.prev.remove(n)
-            
-            map.remove(n)
-
-    # 4.2. Set IDs of nodes again, so it's not spaced out and takes less bits in final representation
-    id = 0
-    for n in map:
-        n.id = id
-        id += 1
-
-    print("IDs after cleaning: "+str(id))
-
-    # 4.2. Divide the tree into fake chapters that will be spheres
-    maxY = max(map, key=lambda n: n.Y).Y
-    chapterY = maxY / 7
-    for n in map:
-        for r in n.receptions:
-            r.chapter = 1 + n.Y // chapterY
-
-    print("------------[END]------------")
-
-    return map
+    # Return cconverted tree and the tree itself
+    return (list(converted.values()), tree)
