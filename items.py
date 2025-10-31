@@ -125,9 +125,9 @@ item_list: list[LORItemData] = [
     *[BookItem(id=book.id, name=book.name, copies=1) for book in books],
 
     # Other. Total amount varies.
-    OtherItem(id=0, name="Passive Attribution Points"), # Amount configurable
-    OtherItem(id=1, name="Passive Limits Break"), # Amount configurable
-    OtherItem(id=2, name="Emotion Limits Break"), # Amount configurable
+    OtherItem(id=0, name="Passive Attribution Points"), # Amount predefined & configurable
+    OtherItem(id=1, name="Passive Limits Break"), # Amount predefined & configurable
+    OtherItem(id=2, name="Emotion Limits Break"), # Amount predefined & configurable
 
     OtherItem(id=3, name="Binah", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount
     OtherItem(id=4, name="The Black Silence's Page", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount

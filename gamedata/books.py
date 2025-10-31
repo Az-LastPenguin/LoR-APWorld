@@ -173,3 +173,4 @@ books: list[BookInfo] = [
     BookInfo(id=260004, name="Book of Oliver"),
 ]
 books_dict: dict[int, BookInfo] = {book.id: book for book in books}
+books_by_name: dict[str, BookInfo] = {book.name: book for book in books}

@@ -57,8 +57,6 @@ class TrapsImpact(Choice):
 ### FLOOR-RELATED ###
 class LockFloors(Toggle):
     """
-    !!!NOT IMPLEMENTED!!! TODO
-
     If 'true', every floor except one (Random or preset) is locked at the start of the run and must be unlocked via respective items.
     """
 
@@ -67,8 +65,6 @@ class LockFloors(Toggle):
 
 class StartingFloor(Choice):
     """
-    !!!NOT IMPLEMENTED!!! TODO
-
     If "Lock Floors" is 'true', select which floor will be unlocked at the start of the run.
     """
 
@@ -95,7 +91,7 @@ class Endgoals(OptionSet):
     Goals contain checks which WONT yield any items progression relies on (Mostly only Passive/Emotion upgrades and Book of Everything)
     Goals that are not selected will STILL be accessed in the game and WILL yield checks.
     
-    'Reverberation Ensemble' - Defeat X/10 Ensemble battles. X can be set in the 'Reverberation Ensemble Goal Receptions' setting.
+    'Reverberation Ensemble' - Defeat X out of 10 Ensemble battles. X can be set in the 'Reverberation Ensemble Goal Receptions' setting.
     'Black Silence' - Complete Reception of The Black Silence.
     'Keter Realization' - Realize the Floor of General Works.
     'Distorted Ensemble' - Complete Reception of The Reverberation Ensemble Distorted.
@@ -148,7 +144,7 @@ class AbnoPageRandomization(Choice):
     None - Abno Pages retain their vanilla Emotion State, Level and Rate.
     VanillaLike - Emotion State and Rate are randomized, Emotion Levels are randomized and distributed like in vanilla game. (6 of I, 6 of II, 3 of III per floor)
     Guarantee - Every stat is randomized, but it is guaranteed that there will be at least: 4 Positive Pages, 4 Negative Pages, 3 Pages of each Emotion Level per floor.
-    Random - Every stat is randomized, with no restrictions.
+    Random - Every stat is randomized, without restrictions.
     """
 
     display_name = "Abnormality Page Randomization"
@@ -161,7 +157,7 @@ class AbnoPageRandomization(Choice):
 class ExodiaGuarantee(Toggle):
     """
     If "Abnormality Page Shuffle" is set to "Shuffle", and this setting is 'true', certain sets of Abno Pages will be forced 
-    to appear on their vanilla floor with same Emotion State, Rate and Emotion Levels (albeit not always in same group of pages).
+    to appear on the same floor with vanilla Emotion State, Rate and Emotion Levels (albeit not always in same group of pages).
     """
     display_name = "Guarantee Exodia Abnormality Sets"
     default = False
@@ -205,7 +201,7 @@ class PageRandomization(Choice):
 class RandomizeReceptionTree(Toggle):
     """
     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
-    unique for each Seed. First reception is ALWAYS Rats.
+    unique for each Seed. First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
     """
 
     display_name = "Randomize Reception Tree"
@@ -216,22 +212,24 @@ class ReceptionsProgression(Choice):
     Select the way receptions progress in the game.
 
     Unlocked - Every reception is unlocked from the start. Endgoals are also unlocked.
-    Paths - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
-        reception in the reception tree unlocks access to every Endgoal on the map.
-    VanillaLike - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
+    Progressive - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
+        reception in the reception tree unlocks access to the endgoals.
+    ProgressiveBooks - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
             Required books are randomized. Endgoal access is same as 'Paths' option.
     """
 
     display_name = "Receptions Progression"
     option_unlocked = 0
-    option_paths = 1
-    option_vanillalike = 2
+    option_progressive = 1
+    option_progressivebooks = 2
     default = 2
 
 class EnemiesTurnIntoChecks(Toggle):
     """
     If 'true', instead of receiving Checks after completing the Reception, Checks can be received after defeating enemies from that Reception.
-    Not every enemy can turn into checks and each enemy can only turn into Checks ONCE.
+    Not every enemy can turn into checks and each enemy can only turn into Checks ONCE. (If there is more checks than unique enemies, enemies can turn into checks more than once.)
+
+    If you really hate yourself and want to complete some receptions more than once.
     """
 
     display_name = "Enemies Turn Into Checks"
@@ -264,18 +262,23 @@ class FloorProgression(Choice):
     """
     Select the way Abnormality Suppressions and Realizations progress.
 
-    NoRequirements - Suppressions and Realizations don't have any requirements, you can start them whenever you want. (ofc suppressions -> realization order is still relevant.)
-    VanillaLike - Suppressions and Realizations have requirements like in vanilla game, and those requirements are as close to vanilla ones as they can be.
-                Book obtainment and Reception completion requirements are retained. Rank reach requirement is changed to 'being able to access any X Rank/Chapter Reception'.
-                Any other requirements are omitted.
-    Randomized - 'VanillaLike' setting except requirements are randomized. Every Suppression/Realization can only have requirements from a single chapter.
+    AlwaysOpen - Suppressions and Realizations don't have any requirements, you can attempt next stage whenever you want.
+    Books - Suppressions and Realizations require certain books.
     """
     
     display_name = "Floor Progression"
-    option_norequirements = 0
-    option_vanillalike = 1
-    option_randomized = 2
-    default = 2
+    option_alwaysopen = 0
+    option_books = 1
+    default = 1
+
+class RandomizeBlackSilencePage(Toggle):
+    """
+    If 'true', Black Silence Page item's location will be random.
+    If 'false', Black Silence Page will be unlocked after completing Reception of Oliver
+    """
+
+    display_name = "Randomize Black Silence Page Location"
+    default = True
 
 ### OTHER ###
 class PassivePointsItems(Range):
@@ -285,7 +288,7 @@ class PassivePointsItems(Range):
     Base amount is 15 Items, meaning up to 30 Passive Attribution Points in-game.
 
     Do note that adding more of those Items leads to having less free space in the Item Pool,
-    potentially lowering the amount of Books of Everything you'll be able to get.
+    potentially lowering the amount of other filler items you'll be able to get.
     """
     display_name = "Passive Attribution Point Items"
     range_start = 0
@@ -309,7 +312,7 @@ class PassiveLimitsItems(Range):
     Base amount is 6 Items, meaning up to 8 Additional Passives attributed in-game.
 
     Do note that adding more of those Items leads to having less free space in the Item Pool,
-    potentially lowering the amount of Books of Everything you'll be able to get.
+    potentially lowering the amount of other filler items you'll be able to get.
     """
     display_name = "Passive Limits Break Items"
     range_start = 0
@@ -335,7 +338,7 @@ class EmotionLimitsItems(Range):
     Base amount is 10 Items, meaning up to 10 Max Emotion Level in-game.
 
     Do Note that adding more of those Items leads to having less free space in the Item Pool,
-    potentially lowering the amount of Books of Everything you'll be able to get.
+    potentially lowering the amount of other filler items you'll be able to get.
     """
     display_name = "Passive Limits Break Items"
     range_start = 0
@@ -374,9 +377,11 @@ class LOROptions(PerGameCommonOptions):
     # Progression
     randomize_reception_tree: RandomizeReceptionTree
     receptions_progression: ReceptionsProgression
+    enemies_turn_into_checks: EnemiesTurnIntoChecks
     abno_randomization: AbnoRandomization
     shuffle_realizations: ShuffleRealizations
     floor_progression: FloorProgression
+    randomize_black_silence_page: RandomizeBlackSilencePage
     # Other
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems
