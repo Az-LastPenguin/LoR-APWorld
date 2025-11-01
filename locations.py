@@ -139,13 +139,11 @@ def setup_locations(random: random.Random, options: LOROptions):
 
 ## RECEPTION RANDOMIZATON
 def generate_reception_tree(random: random.Random):
-    print("GENERATING")
     all_nodes = reception_nodes.copy()
     first_node = all_nodes.pop(0)
     last_node = all_nodes.pop()
 
     # Select height and amounts of nodes per each height level
-    print("GENERATING NODE AMOUNTS")
     height = random.randint(15, 25)
     node_amounts = {i: 1 for i in range(height)}
 
@@ -162,7 +160,6 @@ def generate_reception_tree(random: random.Random):
             break
     
     # Distribute receptions
-    print("DISTRIBUTING NODES")
     nodes: list[list[ReceptionNode]] = [[] for i in range(height)]
 
     nodes[0] = [first_node]
@@ -176,16 +173,14 @@ def generate_reception_tree(random: random.Random):
             ri = 0
             while ri < len(all_nodes)-1 and random.random() >= 0.5:
                 ri += 1
-            print(f"POPPING {ri}; {len(all_nodes)}")
+
             node = all_nodes.pop(ri)
             node.next = []
 
             nodes[i].append(node)
     
     # Create connections
-    print("CREATING CONNECTIONS")
     for i in range(1, height):
-        print(f"CONNECTING Y: {i}")
         for node in nodes[i]:
             candidates = nodes[i-1].copy()
             while True:
@@ -194,17 +189,8 @@ def generate_reception_tree(random: random.Random):
 
                 if len(candidates) <= 0 or random.random() < 0.8:
                     break
-    
-    # Debug
-    for v in nodes:
-        print(f"Y: {nodes.index(v)}")
-        for n in v:
-            print(n.name)
-        
-        print("-------------")
 
     # Put everything in a list
-    print("RETURNING")
     result_nodes_list = []
     for v in nodes:
         for n in v:

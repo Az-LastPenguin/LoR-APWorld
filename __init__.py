@@ -1,8 +1,9 @@
 import typing, time, math
+from . import logic
 from .options import LOROptions
 from .items import LORItem, LORItemData, items_by_id, items_by_name, items_by_category, items_name_to_id
 from .locations import LORLocation, ReceptionTree, setup_locations, locations_name_to_id
-from .gamedata.receptions import ReceptionNode, receptions_dict, receptions_by_name
+from .gamedata.receptions import ReceptionNode, receptions_dict, receptions_by_name, endgoal_receptions
 from .gamedata.abnormalities import Floor, FloorStage
 from .gamedata.books import books_dict, books_by_name
 from .util import box_muller_constraint
@@ -84,7 +85,7 @@ class LORWorld(World):
             self.multiworld.regions.append(node_region)
 
         # 2.1 Pre-place Black Silence Page at Oliver Reception if needed
-        if self.options.randomize_black_silence_page.value == 1:
+        if self.options.randomize_black_silence_page.value:
             self.multiworld.get_location("Oliver (1)", self.player).place_locked_item(self.create_item("The Black Silence's Page"))
 
         # 3. Connect regions and add access rules
@@ -100,30 +101,25 @@ class LORWorld(World):
                 this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
 
             # Require Books
-            print(f"{node.name}: ")
-            for b in node.req_books:
-                print(books_dict[b].name)
-            print("---------------")
-
             for entrance in this_region.entrances:
                 books = []
                 for b in node.req_books:
                     books.append(books_dict[b].name)
-                set_rule(entrance, lambda state, books=books: state.has_all(books, self.player))
+                set_rule(entrance, lambda state, books=books: state.has_all(books, self.player) and logic.lor_enough_librarians(node.req_librarians, state, self.player))
 
         # 4. Create regions for abnos and connect them, also add rules
         max_depth = self.reception_tree.get_depth(self.reception_tree.last_reception)
         part = (max_depth - 3) / 5
-        for floor in self.floors:
-            i = 1
+        for i in range(10):
+            floor = self.floors[i]
+            j = 1
             for stage in [*floor.abno_stages, floor.realization_stage]:
-                print(stage.name)
                 stage_region = Region(stage.name, self.player, self.multiworld)
                 self.multiworld.regions.append(stage_region)
 
                 # Create locations
-                for j in range(stage.checks):
-                    location_name = f"{stage.name} ({j+1})"
+                for k in range(stage.checks):
+                    location_name = f"{stage.name} ({k+1})"
 
                     location = LORLocation(self.player, location_name, locations_name_to_id[location_name], stage_region)
                     stage_region.locations.append(location)
@@ -131,31 +127,38 @@ class LORWorld(World):
                     add_item_rule(location, lambda item: item.player != self.player or (not item.name in list(books_by_name.keys()) or item.classification == ItemClassification.filler))
 
                 # Select which region to connect to and connect
-                y = part * i
+                y = part * j
                 depth = round(y + box_muller_constraint(self.random, -part/2, part/2))
 
                 depth_nodes = self.reception_tree.get_nodes_of_depth(depth)
-                print(depth, len(depth_nodes))
                 node = depth_nodes[self.random.randint(0, len(depth_nodes)-1) if len(depth_nodes) > 0 else 0]
                 node_region: Region = self.multiworld.get_region(node.name, self.player)
 
                 node_region.connect(stage_region)
                 
                 # Set rule
-                print(f"{stage.name}: ")
-                for b in stage.req_books:
-                    print(books_dict[b].name)
-                print("---------------")
-
                 books = []
                 for b in node.req_books:
                     books.append(books_dict[b].name)
-                set_rule(stage_region.entrances[0], lambda state, books=books: state.has_all(books, self.player))
+                set_rule(stage_region.entrances[0], lambda state, books=books: 
+                         state.has_all(books, self.player) 
+                         and logic.lor_has_floor(i, state, self.player) 
+                         and logic.lor_enough_librarians_on_floor(i, stage.req_librarians, state, self.player))
 
-                i += 1
+                j += 1
 
         # 5. Create endgame region, connect it to the last reception
         endgame = Region("Endgame", self.player, self.multiworld)
+
+        # Add the endgoal locations
+        for node in endgoal_receptions:
+            # Create a location for each check
+            for i in range(node.checks):
+                location_name = f"{node.name} ({i+1})"
+
+                location = LORLocation(self.player, location_name, locations_name_to_id[location_name], endgame)
+                location.progress_type = LocationProgressType.EXCLUDED
+                endgame.locations.append(location)
 
         # Create endgoal location with finish event
         victory_event = LORLocation(self.player, "Game Completed", None, endgame)
@@ -191,8 +194,14 @@ class LORWorld(World):
                 itempool += [i.name]*i.copies
 
         # Remove Black Silence page if it was pre-placed
-        if self.options.randomize_black_silence_page.value == 1:
+        if self.options.randomize_black_silence_page.value:
             itempool.remove("The Black Silence's Page")
+
+        # Remove precollected floors from the pool
+        floor_names = [f.name for f in items_by_category["FloorUnlock"]]
+        for i in self.multiworld.precollected_items[self.player]:
+            if i.name in floor_names:
+                itempool.remove(i.name)
 
         # Fill all the free space with Books of Everything
         itempool += ["Book of Everything"]*(total_locations-len(itempool))
@@ -207,14 +216,18 @@ class LORWorld(World):
         #input()
         #visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
         
+        reception_tree: dict[int, list[int]] = {}
+        for node in self.reception_tree.reception_nodes:
+            reception_tree[node.id] = node.next
+
         reception_book_requirements = {node.id: node.req_books for node in self.reception_tree.reception_nodes}
 
         abno_book_requirements: list[list[list[int]]] = []
         for floor in self.floors:
             abno_book_requirements.append([stage.req_books for stage in [*floor.abno_stages, floor.realization_stage]])
 
-        from_options = self.options.as_dict(
-            "seed",
+        slot_data = self.options.as_dict(
+            "random_seed",
             "endgoals",
             "ensemble_battles",
             "abno_page_shuffle",
@@ -230,8 +243,12 @@ class LORWorld(World):
             "randomize_black_silence_page",
             )
 
-        from_options["reception_book_requirements"] = reception_book_requirements
-        from_options["abno_book_requirements"] = abno_book_requirements
+        slot_data["reception_book_requirements"] = reception_book_requirements
+        slot_data["abno_book_requirements"] = abno_book_requirements
 
-        return from_options
+        slot_data["first_reception"] = self.reception_tree.first_reception
+        slot_data["last_reception"] = self.reception_tree.last_reception
+        slot_data["reception_tree"] = reception_tree
+
+        return slot_data
     
