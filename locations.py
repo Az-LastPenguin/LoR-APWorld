@@ -139,18 +139,25 @@ def setup_locations(random: random.Random, options: LOROptions):
 
 ## RECEPTION RANDOMIZATON
 def generate_reception_tree(random: random.Random):
-    all_nodes = reception_nodes.copy()
-    first_node = all_nodes.pop(0)
-    last_node = all_nodes.pop()
+    # Before everything, shuffle receptions in their chapters to make things worse
+    copy = reception_nodes.copy()
+    first_node = copy.pop(0)
+    last_node = copy.pop()
+    all_nodes = []
+
+    for i in range(1, 8):
+        chapter_nodes = [n for n in copy if n.chapter == i]
+        random.shuffle(chapter_nodes)
+        all_nodes = [*all_nodes, *chapter_nodes]
 
     # Select height and amounts of nodes per each height level
-    height = random.randint(15, 25)
+    height = random.randint(22, 32)
     node_amounts = {i: 1 for i in range(height)}
 
     i = len(all_nodes) - height
     while True:
         y = round(box_muller_constraint(random, 1, height-1))
-        if node_amounts[y] >= 5:
+        if node_amounts[y] >= 6:
            continue
 
         node_amounts[y] += 1

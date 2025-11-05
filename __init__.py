@@ -225,7 +225,7 @@ class LORWorld(World):
         abno_book_requirements: list[list[list[int]]] = []
         for floor in self.floors:
             abno_book_requirements.append([stage.req_books for stage in [*floor.abno_stages, floor.realization_stage]])
-
+        # TODO Send abnos/realizations order (forgor)
         slot_data = self.options.as_dict(
             "random_seed",
             "endgoals",

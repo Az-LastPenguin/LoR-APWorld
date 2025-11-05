@@ -226,8 +226,7 @@ class ReceptionsProgression(Choice):
 
 class EnemiesTurnIntoChecks(Toggle):
     """
-    If 'true', instead of receiving Checks after completing the Reception, Checks can be received after defeating enemies from that Reception.
-    Not every enemy can turn into checks and each enemy can only turn into Checks ONCE. (If there is more checks than unique enemies, enemies can turn into checks more than once.)
+    If 'true', instead of receiving Checks after completing the Reception, You get one check for each defeated enemy.
 
     If you really hate yourself and want to complete some receptions more than once.
     """
@@ -284,8 +283,8 @@ class RandomizeBlackSilencePage(Toggle):
 class PassivePointsItems(Range):
     """
     Select the amount of "Passive Attribution Points" Items you'll be able to acquire in total.
-    You always start with 0 Items (Unless configured otherwise) and get 2 Passive Attribution Points for each Item.
-    Base amount is 15 Items, meaning up to 30 Passive Attribution Points in-game.
+    You always start with 2 Items (Unless configured otherwise) and get 2 Passive Attribution Points for each Item.
+    Base amount is 15 Items, meaning up to 34 Passive Attribution Points in-game.
 
     Do note that adding more of those Items leads to having less free space in the Item Pool,
     potentially lowering the amount of other filler items you'll be able to get.
@@ -302,14 +301,14 @@ class StartingPassivePointsItems(Range):
     display_name = "Starting Passive Attribution Point Items"
     range_start = 0
     range_end = 100
-    default = 0
+    default = 2
 
 class PassiveLimitsItems(Range):
     """
     Select the amount of "Passive Limits Break" Items you'll be able to acquire in total.
-    You always start with 2 Items (Unless configured otherwise) and get 1 Passive Space for each Item.
-    These Items determine how much ADDITIONAL Passives you'll be able to put on a single Key Page.
-    Base amount is 6 Items, meaning up to 8 Additional Passives attributed in-game.
+    You always start with 2 Items (Unless configured otherwise) and get 1 Passive slot for each Item.
+    These Items determine how much Passives you'll be able to put on a single Key Page (Not including passives tied to the page itself)
+    Base amount is 10 Items, meaning up to 12 Passives attributed in-game.
 
     Do note that adding more of those Items leads to having less free space in the Item Pool,
     potentially lowering the amount of other filler items you'll be able to get.
@@ -317,7 +316,7 @@ class PassiveLimitsItems(Range):
     display_name = "Passive Limits Break Items"
     range_start = 0
     range_end = 100
-    default = 6
+    default = 10
 
 class StartingPassiveLimitsItems(Range):
     """
