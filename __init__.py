@@ -38,7 +38,7 @@ class LORWorld(World):
 
         # Precollect unlocked floors
         if self.options.lock_floors.value: # I am very fond of long-ass one-liners
-            self.multiworld.push_precollected(self.create_item(items_by_category["FloorUnlock"][self.options.starting_floor.value >= 10 and self.random.randint(0,9) or self.options.starting_floor.value].name))
+            self.multiworld.push_precollected(self.create_item(items_by_category["FloorUnlock"][self.random.randint(0,9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value].name))
         else:
             for fi in items_by_category["FloorUnlock"]:
                 self.multiworld.push_precollected(self.create_item(fi.name))
@@ -82,7 +82,7 @@ class LORWorld(World):
                 location = LORLocation(self.player, location_name, locations_name_to_id[location_name], node_region)
                 node_region.locations.append(location)
 
-            self.multiworld.regions.append(node_region)
+                self.multiworld.regions.append(node_region)
 
         # 2.1 Pre-place Black Silence Page at Oliver Reception if needed
         if self.options.randomize_black_silence_page.value:
@@ -97,8 +97,12 @@ class LORWorld(World):
             this_region: Region = self.multiworld.get_region(node.name, self.player)
 
             # First we connect each region to the next
-            for nn in node.next:
-                this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
+            if self.options.receptions_progression == 0 or self.options.receptions_progression == 2:
+                # If it's those options, every reception is available from start and is also last reception
+                menu.connect(this_region)
+            else:
+                for nn in node.next:
+                    this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
 
             # Require Books
             for entrance in this_region.entrances:
@@ -109,7 +113,7 @@ class LORWorld(World):
 
         # 4. Create regions for abnos and connect them, also add rules
         max_depth = self.reception_tree.get_depth(self.reception_tree.last_reception)
-        part = (max_depth - 3) / 5
+        part = (max_depth - 2) / 5
         for i in range(10):
             floor = self.floors[i]
             j = 1
@@ -168,8 +172,15 @@ class LORWorld(World):
         self.multiworld.completion_condition[self.player] = lambda state: state.has("One Perfect Book Achieved", self.player)
 
         # Connect endgame region to mid
-        last_node = self.multiworld.get_region(self.reception_tree.get_node(self.reception_tree.last_reception).name, self.player)
-        last_node.connect(endgame)
+        if self.options.receptions_progression == 0 or self.options.receptions_progression == 2:
+            for node in self.reception_tree.reception_nodes:
+                this_region: Region = self.multiworld.get_region(node.name, self.player)
+
+                this_region.connect(endgame)
+        else:
+            last_node = self.multiworld.get_region(self.reception_tree.get_node(self.reception_tree.last_reception).name, self.player)
+            last_node.connect(endgame)
+
         self.multiworld.regions.append(endgame)
 
     def create_item(self, item: str) -> LORItem:
@@ -213,19 +224,9 @@ class LORWorld(World):
         pass
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
-        #input()
-        #visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
-        
-        reception_tree: dict[int, list[int]] = {}
-        for node in self.reception_tree.reception_nodes:
-            reception_tree[node.id] = node.next
+        input()
+        visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
 
-        reception_book_requirements = {node.id: node.req_books for node in self.reception_tree.reception_nodes}
-
-        abno_book_requirements: list[list[list[int]]] = []
-        for floor in self.floors:
-            abno_book_requirements.append([stage.req_books for stage in [*floor.abno_stages, floor.realization_stage]])
-        # TODO Send abnos/realizations order (forgor)
         slot_data = self.options.as_dict(
             "random_seed",
             "endgoals",
@@ -243,11 +244,28 @@ class LORWorld(World):
             "randomize_black_silence_page",
             )
 
+
+        reception_book_requirements = {node.id: node.req_books for node in self.reception_tree.reception_nodes}
         slot_data["reception_book_requirements"] = reception_book_requirements
+
+        abno_book_requirements: list[list[list[int]]] = []
+        abno_fight_order: list[list[int]] = []
+        for floor in self.floors:
+            abno_book_requirements.append([stage.req_books for stage in [*floor.abno_stages, floor.realization_stage]])
+            abno_fight_order.append([stage.id for stage in [*floor.abno_stages, floor.realization_stage]])
         slot_data["abno_book_requirements"] = abno_book_requirements
+        slot_data["abno_fight_order"] = abno_fight_order
+
 
         slot_data["first_reception"] = self.reception_tree.first_reception
         slot_data["last_reception"] = self.reception_tree.last_reception
+
+        reception_tree: dict[int, dict] = {}
+        for node in self.reception_tree.reception_nodes:
+            reception_tree[node.id] = {
+                "next": node.next,
+                "y": node.y,
+            }
         slot_data["reception_tree"] = reception_tree
 
         return slot_data

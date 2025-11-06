@@ -10,6 +10,7 @@ class ReceptionNode:
     checks: int # amount of checks this reception will yield
     next: list[int] # ids of next receptions
     chapter: int # in-game chapter this reception in. Only used to make randomization better
+    y: int = 0 # height/depth of the node in the reception tree. Only used when randomizing the tree to render on client more accurately
     req_books: list[int] = field(default_factory=list) # ids of books this reception requires (only set during generation)
     req_librarians: int = 1 # minimum amount of librarians in any floor required to consider reception completable
 
@@ -101,21 +102,21 @@ reception_nodes: list[ReceptionNode] = [
 
 endgoal_receptions: list[ReceptionNode] = [
     # Ensemble
-    ReceptionNode(id=70001, name="[Ensemble] The Crying Children", checks=5, next=[]),
-    ReceptionNode(id=70002, name="[Ensemble] The Church of Gears", checks=5, next=[]),
-    ReceptionNode(id=70003, name="[Ensemble] The Eighth Chef", checks=5, next=[]),
-    ReceptionNode(id=70004, name="[Ensemble] The Musicians of Bremen", checks=5, next=[]),
-    ReceptionNode(id=70005, name="[Ensemble] The 8 o'Clock Circus", checks=5, next=[]),
-    ReceptionNode(id=70006, name="[Ensemble] L'heure du Loup", checks=5, next=[]),
-    ReceptionNode(id=70007, name="[Ensemble] The Puppeteer", checks=5, next=[]),
-    ReceptionNode(id=70008, name="[Ensemble] The Blood-red Night", checks=5, next=[]),
-    ReceptionNode(id=70009, name="[Ensemble] Yesterday's Promise", checks=5, next=[]),
-    ReceptionNode(id=70010, name="[Ensemble] The Blue Reverberation", checks=5, next=[]),
+    ReceptionNode(id=70001, name="[Ensemble] The Crying Children", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70002, name="[Ensemble] The Church of Gears", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70003, name="[Ensemble] The Eighth Chef", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70004, name="[Ensemble] The Musicians of Bremen", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70005, name="[Ensemble] The 8 o'Clock Circus", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70006, name="[Ensemble] L'heure du Loup", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70007, name="[Ensemble] The Puppeteer", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70008, name="[Ensemble] The Blood-red Night", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70009, name="[Ensemble] Yesterday's Promise", checks=5, next=[], chapter=8),
+    ReceptionNode(id=70010, name="[Ensemble] The Blue Reverberation", checks=5, next=[], chapter=8),
 
     # Black Silence
-    ReceptionNode(id=60003, name="The Black Silence", checks=10, next=[]),
+    ReceptionNode(id=60003, name="The Black Silence", checks=10, next=[], chapter=8),
 
-    ReceptionNode(id=60004, name="The Reverberation Ensemble Distorted", checks=10, next=[]),
+    ReceptionNode(id=60004, name="The Reverberation Ensemble Distorted", checks=10, next=[], chapter=8),
 ]
 
 

@@ -214,15 +214,19 @@ class ReceptionsProgression(Choice):
     Unlocked - Every reception is unlocked from the start. Endgoals are also unlocked.
     Progressive - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
         reception in the reception tree unlocks access to the endgoals.
+    Books - Every reception requires books to send invitation. Endgoals are unlocked. !!!BE AWARE that this setting follows NO logical progression, and you might as well just get Xiao after Rats!!!
     ProgressiveBooks - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
             Required books are randomized. Endgoal access is same as 'Paths' option.
+
+    Receptions in Unlocked & Books are represented not in a tree form in-game.
     """
 
     display_name = "Receptions Progression"
     option_unlocked = 0
     option_progressive = 1
-    option_progressivebooks = 2
-    default = 2
+    option_books = 2
+    option_progressivebooks = 3
+    default = 3
 
 class EnemiesTurnIntoChecks(Toggle):
     """
