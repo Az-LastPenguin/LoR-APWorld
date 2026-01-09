@@ -35,7 +35,7 @@ class AbnoPagesItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "AbnoPages"
     copies = 5
-    type = ItemClassification.progression_skip_balancing
+    type = ItemClassification.useful
 
 @dataclass
 class EgoPageItem(LORItemData):
@@ -43,7 +43,7 @@ class EgoPageItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "EgoPage"
     copies = 5
-    type = ItemClassification.progression_skip_balancing
+    type = ItemClassification.useful
 
 @dataclass
 class LibrarianItem(LORItemData):
@@ -51,7 +51,7 @@ class LibrarianItem(LORItemData):
     name: str
     copies: int
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Librarian"
-    type = ItemClassification.progression
+    type = ItemClassification.useful
 
 @dataclass
 class BookItem(LORItemData):
@@ -59,7 +59,7 @@ class BookItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Book"
     copies: int = 0
-    type = ItemClassification.progression_skip_balancing
+    type = ItemClassification.progression
 
 @dataclass
 class OtherItem(LORItemData):
@@ -67,7 +67,7 @@ class OtherItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Other"
     copies: int = 0
-    type = ItemClassification.filler
+    type = ItemClassification.useful
 
 
 item_list: list[LORItemData] = [
@@ -121,16 +121,18 @@ item_list: list[LORItemData] = [
 
     # Books. Total Amount varies.
     BookItem(id=123456, name="Book of Everything", type=ItemClassification.filler), # Could i interest you in everything all of the time?
+    BookItem(id=123457, name="Booster Pack", type=ItemClassification.filler), # Welcome back LORAP v0.1 Booster Packs. 
     # Vanilla Books, always one of each
     *[BookItem(id=book.id, name=book.name, copies=1) for book in books],
 
     # Other. Total amount varies.
-    OtherItem(id=0, name="Passive Attribution Points"), # Amount predefined & configurable
-    OtherItem(id=1, name="Passive Limits Break"), # Amount predefined & configurable
-    OtherItem(id=2, name="Emotion Limits Break"), # Amount predefined & configurable
+    OtherItem(id=0, name="Passive Attribution Points"), # Depends on an option
+    OtherItem(id=1, name="Passive Limits Break"), # Depends on an option
+    OtherItem(id=2, name="Emotion Limits Break"), # Depends on an option
 
-    OtherItem(id=3, name="Binah", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount
-    OtherItem(id=4, name="The Black Silence's Page", copies=1, type=ItemClassification.progression_skip_balancing), # Fixed amount
+    OtherItem(id=3, name="Binah", copies=1), # Fixed amount
+    OtherItem(id=4, name="The Black Silence's Page", copies=1), # Fixed amount
+    OtherItem(id=5, name="Combat Page Exclusiveness Remove"), # Depends on an option
 ]
 
 items_by_category: dict[str, list[LORItemData]] = {item_type: [item for item in item_list if item.type_id == item_type] for item_type in item_types}

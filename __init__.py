@@ -1,4 +1,6 @@
-import typing, time, math
+import typing, time
+
+from Options import OptionError
 from . import logic
 from .options import LOROptions
 from .items import LORItem, LORItemData, items_by_id, items_by_name, items_by_category, items_name_to_id
@@ -27,6 +29,11 @@ class LORWorld(World):
     floors: list[Floor] = []
 
     def generate_early(self) -> None:
+        # Check for option conflicts # NOTE: Might be possible to implement, so commented out for now
+        #if self.options.filler_items == 0 and (self.options.receptions_progression != 1 or self.options.receptions_progression != 3):
+        #    raise OptionError(f"{self.player_name}'s Library of ruina has Book of Everything selected as a filler item, but"
+        #                      f" Receptions Progreession is not set to Progression or ProgressionBooks!")
+
         # Set Randomization Seed
         if self.options.random_seed.value < 0:
             self.options.random_seed.value = int(time.time())
@@ -38,12 +45,15 @@ class LORWorld(World):
 
         # Precollect unlocked floors
         if self.options.lock_floors.value: # I am very fond of long-ass one-liners
-            self.multiworld.push_precollected(self.create_item(items_by_category["FloorUnlock"][self.random.randint(0,9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value].name))
+            floor = items_by_category["FloorUnlock"][self.random.randint(0,9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value].name
+            self.multiworld.push_precollected(self.create_item(floor))
+            items_by_name[floor].copies = 0
         else:
             for fi in items_by_category["FloorUnlock"]:
                 self.multiworld.push_precollected(self.create_item(fi.name))
+                items_by_name[fi.name].copies = 0
         
-        # Set amount of filler items
+        # Set amount of other items
         for i in items_by_name.values():
             if i.name == "Passive Attribution Points":
                 i.copies = self.options.passive_points_items.value
@@ -66,6 +76,16 @@ class LORWorld(World):
         for i in range(self.options.starting_emotion_limits_items.value):
             self.multiworld.push_precollected(self.create_item("Emotion Limits Break"))
 
+        # Precollect or add to the pool the "Combat Page Exclusiveness Remove" item
+        if self.options.remove_exclusive == 1:
+            items_by_name["Combat Page Exclusiveness Remove"].copies = 1
+        else:
+            self.multiworld.push_precollected(self.create_item("Combat Page Exclusiveness Remove"))
+
+        # Remove "The Black Silence's Page" from the pool if randomize_black_silence_page is false
+        if not self.options.randomize_black_silence_page:
+            items_by_name["The Black Silence's Page"].copies = 0
+
     def create_regions(self) -> None:
         # 1. Create Menu region (techinal 0th sphere w/o items)
         menu = Region("Menu", self.player, self.multiworld)
@@ -82,7 +102,7 @@ class LORWorld(World):
                 location = LORLocation(self.player, location_name, locations_name_to_id[location_name], node_region)
                 node_region.locations.append(location)
 
-                self.multiworld.regions.append(node_region)
+            self.multiworld.regions.append(node_region)
 
         # 2.1 Pre-place Black Silence Page at Oliver Reception if needed
         if self.options.randomize_black_silence_page.value:
@@ -98,7 +118,7 @@ class LORWorld(World):
 
             # First we connect each region to the next
             if self.options.receptions_progression == 0 or self.options.receptions_progression == 2:
-                # If it's those options, every reception is available from start and is also last reception
+                # If it's those options, every reception is available from start and is also the last reception
                 menu.connect(this_region)
             else:
                 for nn in node.next:
@@ -127,8 +147,8 @@ class LORWorld(World):
 
                     location = LORLocation(self.player, location_name, locations_name_to_id[location_name], stage_region)
                     stage_region.locations.append(location)
-                    
-                    add_item_rule(location, lambda item: item.player != self.player or (not item.name in list(books_by_name.keys()) or item.classification == ItemClassification.filler))
+                    # TODO: Try to disable this rule and see if its good?
+                    # add_item_rule(location, lambda item: item.player != self.player or (not item.name in list(books_by_name.keys()) or item.classification == ItemClassification.filler))
 
                 # Select which region to connect to and connect
                 y = part * j
@@ -204,18 +224,9 @@ class LORWorld(World):
             if i.copies > 0:
                 itempool += [i.name]*i.copies
 
-        # Remove Black Silence page if it was pre-placed
-        if self.options.randomize_black_silence_page.value:
-            itempool.remove("The Black Silence's Page")
-
-        # Remove precollected floors from the pool
-        floor_names = [f.name for f in items_by_category["FloorUnlock"]]
-        for i in self.multiworld.precollected_items[self.player]:
-            if i.name in floor_names:
-                itempool.remove(i.name)
-
-        # Fill all the free space with Books of Everything
-        itempool += ["Book of Everything"]*(total_locations-len(itempool))
+        # Fill all unused space with the filler items
+        fillers = ["Book of Everything", "Booster Pack"]
+        itempool += [fillers[self.options.filler_items]]*(total_locations-len(itempool))
         
         # Set the item pool
         self.multiworld.itempool += map(self.create_item, itempool)
@@ -234,6 +245,7 @@ class LORWorld(World):
             "abno_page_shuffle",
             "abno_page_randomization",
             "exodia_guaratnee",
+            "preserve_sets",
             "ego_page_shuffle",
             "randomize_reception_tree",
             "receptions_progression",
@@ -242,8 +254,12 @@ class LORWorld(World):
             "shuffle_realizations",
             "floor_progression",
             "randomize_black_silence_page",
+            "filler_items",
+            "deck_progression",
             )
 
+        for l in self.multiworld.get_locations(self.player):
+            print(l)
 
         reception_book_requirements = {node.id: node.req_books for node in self.reception_tree.reception_nodes}
         slot_data["reception_book_requirements"] = reception_book_requirements

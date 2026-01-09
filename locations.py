@@ -64,7 +64,7 @@ class ReceptionTree:
 def setup_locations(random: random.Random, options: LOROptions):
     # Create the reception tree
     tree = ReceptionTree()
-    tree.reception_nodes = reception_nodes if options.randomize_reception_tree.value == 0 else generate_reception_tree(random)
+    tree.reception_nodes = reception_nodes if options.randomize_reception_tree.value == 0 else generate_reception_tree(random, options)
     tree.first_reception = tree.reception_nodes[0].id
     tree.last_reception = tree.reception_nodes[-1].id
     tree.calc_depth()
@@ -135,24 +135,26 @@ def setup_locations(random: random.Random, options: LOROptions):
 
         # If somehow there are still books, we make them filler items
         for book in book_pool:
-            items_by_name[book.name].type = ItemClassification.filler
+            items_by_name[book.name].type = ItemClassification.useful
     else:
         for book in books:
-            items_by_name[book.name].type = ItemClassification.filler
+            items_by_name[book.name].type = ItemClassification.useful
 
     return tree, run_floors
 
 ## RECEPTION RANDOMIZATON
-def generate_reception_tree(random: random.Random):
+def generate_reception_tree(random: random.Random, options: LOROptions):
     # Before everything, shuffle receptions in their chapters to make things worse
     copy = reception_nodes.copy()
     first_node = copy.pop(0)
     last_node = copy.pop()
     all_nodes: list[ReceptionNode] = []
+    all_nodes_chaptered: list[list[ReceptionNode]] = []
 
     for i in range(1, 8):
         chapter_nodes = [n for n in copy if n.chapter == i]
         random.shuffle(chapter_nodes)
+        all_nodes_chaptered.append(chapter_nodes)
         all_nodes = [*all_nodes, *chapter_nodes]
 
     # Select height and amounts of nodes per each height level
@@ -186,11 +188,21 @@ def generate_reception_tree(random: random.Random):
         
         nodes[i] = []
         for _ in range(v):
-            ri = 0
-            while ri < len(all_nodes)-1 and random.random() >= 0.5:
-                ri += 1
+            # Select which reception from the queue is gonna be placed here
+            node = None
+            if options.reception_mixing == 0: # Ordered
+                ri = 0
+                while ri < len(all_nodes)-1 and random.random() >= 0.5:
+                    ri += 1
+                    
+                node = all_nodes.pop(ri)
+            elif options.reception_mixing == 1: # Grouped
+                chapter = 0
+                while chapter < len(all_nodes_chaptered) and (len(all_nodes_chaptered[chapter]) == 0 or random.random() >= 0.75):
+                    chapter += 1
+                
+                node = all_nodes_chaptered[chapter].pop(0)
 
-            node = all_nodes.pop(ri)
             node.y = i
             node.next = []
 
