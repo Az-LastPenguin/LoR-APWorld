@@ -98,16 +98,14 @@ class AbnoPageRandomization(Choice):
     Select the way Abnormality Pages are randomized.
 
     None - Abno Pages retain their vanilla Emotion State, Level and Rate.
-    VanillaLike - Emotion State and Rate are randomized, Emotion Levels are randomized and distributed like in vanilla game. (6 of I, 6 of II, 3 of III per floor)
     Guarantee - Every stat is randomized, but it is guaranteed that there will be at least: 4 Positive Pages, 4 Negative Pages, 3 Pages of each Emotion Level per floor.
-    Randomized - Every stat is randomized, without restrictions.
+    Unbound - Every stat is randomized, without restrictions.
     """
 
     display_name = "Abnormality Page Randomization"
     option_none = 0
-    option_vanillalike = 1
-    option_guarantee = 2
-    option_randomized = 3
+    option_guarantee = 1
+    option_unbound = 2
     default = 2
 
 class ExodiaGuarantee(Toggle):
@@ -122,20 +120,13 @@ class ExodiaGuarantee(Toggle):
     display_name = "Guarantee Exodia Abnormality Sets"
     default = False
 
-class EGOPageShuffle(Choice):
+class EGOPageShuffle(Toggle):
     """
-    Select the way EGO Pages are shuffled.
-
-    None - EGO Pages are not shuffled and are placed exactly like in the vanilla game.
-    InFloorShuffle - EGO Pages' order of acquirement is shuffled in their floors.
-    Shuffle - EGO Pages are shuffled between floors.
+    Select if EGO Pages should be shuffled between floors.
     """
     
     display_name = "EGO Page Shuffle"
-    option_none = 0
-    option_infloorshuffle = 1
-    option_shuffle = 2
-    default = 2
+    default = True
 
 class PageRandomization(Choice):
     """
