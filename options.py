@@ -80,15 +80,18 @@ class AbnoPageShuffle(Choice):
     Select the way Abnormality Pages are shuffled.
 
     None - Abno Pages are not shuffled and are placed exactly like in the vanilla game.
-    InFloorShuffle - Pages are shuffled in their floors.
-    Shuffle - Pages are shuffled between the floors.
+    InFloor - Pages are shuffled in their floors individually.
+    Sets - Pages are shuffled between floors in abnormality sets
+           (For example 3 of Scorched Girl's pages are gonna end up in the same page group after randomization).
+    Pages - Pages are shuffled between floors idividually.
     """
 
     display_name = "Abnormality Page Shuffle"
     option_none = 0
-    option_infloorshuffle = 1
-    option_shuffle = 2
-    default = 2
+    option_infloor = 1
+    option_sets = 2
+    option_pages = 3
+    default = 3
 
 class AbnoPageRandomization(Choice):
     """
@@ -109,21 +112,14 @@ class AbnoPageRandomization(Choice):
 
 class ExodiaGuarantee(Toggle):
     """
-    If "Abnormality Page Shuffle" is set to "Shuffle", and this setting is 'true', certain sets of Abno Pages will be forced 
-    to appear on the same floor with vanilla Emotion State, Rate and Emotion Levels (albeit not always in same group of pages).
+    If 'Abnormality Page Shuffle' option is set to 'Sets' or 'Pages', forces certain Abno Pages to be on the same floor after randomization:
+    'Hate', 'Desair', 'Greed', 'Wrath', 'Nix';
+    'Big Eyes', 'Small Beak', 'Long Arms', 'The Beast';
+    'Baptism', 'Apostles', 'Advent'.
+    
+    !!! IMPORTANT: If 'Abnormality Page Shuffle' is set to 'Sets', one of the floors will be forced to have exact same pool of Abno Pages as vanilla Tiphereth floor.
     """
     display_name = "Guarantee Exodia Abnormality Sets"
-    default = False
-    
-class PreserveSets(Toggle):
-    """
-    If this setting is 'true', Abno pages will be randomized preserving in their vanilla sets/groups.
-    (Same abnormality's pages will be in the same sets)
-    
-    IMPORTANT: If this setting is 'true' and 'Guarantee Exodia' is true, some floors will generate
-    extremely close to vanilla!
-    """
-    display_name = "Preserve Abnormality Sets"
     default = False
 
 class EGOPageShuffle(Choice):
@@ -447,7 +443,6 @@ class LOROptions(PerGameCommonOptions):
     abno_page_shuffle: AbnoPageShuffle
     abno_page_randomization: AbnoPageRandomization
     exodia_guaratnee: ExodiaGuarantee
-    preserver_sets: PreserveSets
     ego_page_shuffle: EGOPageShuffle
     page_randomization: PageRandomization
     # Progression

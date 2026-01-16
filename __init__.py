@@ -245,7 +245,6 @@ class LORWorld(World):
             "abno_page_shuffle",
             "abno_page_randomization",
             "exodia_guaratnee",
-            "preserve_sets",
             "ego_page_shuffle",
             "randomize_reception_tree",
             "receptions_progression",
