@@ -37,12 +37,12 @@ books: list[BookInfo] = [
     BookInfo(id=210006, name="Dark Alleys of the Backstreets, Vol. I"),
     BookInfo(id=210007, name="A Backstreets Fixer, Vol. II"),
     BookInfo(id=210008, name="A Backstreets Fixer, Vol. I"),
-    BookInfo(id=210009, name="Streetlight Office (Book)"),
+    BookInfo(id=210009, name="Book of Streetlight Office"),
 
-    BookInfo(id=220001, name="Streetlight Office, Vol. II"),
+    BookInfo(id=220001, name="Book of Streetlight Office, Vol. II"),
     BookInfo(id=220002, name="Book of San"),
-    BookInfo(id=220003, name="Zwei South Section 6 (Book)"),
-    BookInfo(id=220004, name="Zwei South Section 6, Vol. II"),
+    BookInfo(id=220003, name="Book of Zwei South Section 6"),
+    BookInfo(id=220004, name="Book of Zwei South Section 6, Vol. II"),
     BookInfo(id=220005, name="Book of Julia"),
     BookInfo(id=220006, name="Book of Isadora"),
     BookInfo(id=220007, name="Book of Walter"),
@@ -159,7 +159,7 @@ books: list[BookInfo] = [
     BookInfo(id=253001, name="Book of an Udjat"),
 
     BookInfo(id=254001, name="Book of Irina"),
-    BookInfo(id=254001, name="Book of a Mirae Life Insurer"),
+    BookInfo(id=254002, name="Book of a Mirae Life Insurer"),
 
     BookInfo(id=255001, name="Book of Yae"),
     BookInfo(id=255002, name="Book of a Leaflet Workshop Fixer"),

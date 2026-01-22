@@ -158,7 +158,7 @@ class RandomizeReceptionTree(Toggle):
     display_name = "Randomize Reception Tree"
     default = True
 
-class ReceptionMixing(Choice):
+class ReceptionMixing(Choice): # TODO: Fix
     # Basically, if ordered, there is a repeated check of random, 50% chance to pick a farther reception
     # And if grouped, receptions are grouped by their in-game chapters, 25% chance to pick a farther group
     """
@@ -175,7 +175,7 @@ class ReceptionMixing(Choice):
     option_grouped = 1
     default = 0
 
-class ReceptionsProgression(Choice):
+class ReceptionsProgression(Choice): # TODO: Change into "Receptions Require Books" as it doesn't really make sense having 4 options with 2 being almost entirely the same
     """
     Select the way receptions progress in the game.
 
@@ -230,18 +230,15 @@ class ShuffleRealizations(Toggle):
     display_name = "Realization Randomization"
     default = True
 
-class FloorProgression(Choice):
+class FloorsRequireBooks(Toggle):
     """
-    Select the way Abnormality Suppressions and Realizations progress.
+    If 'true', Abnormality Suppressions and Realizations will require books.
 
-    AlwaysOpen - Suppressions and Realizations don't have any requirements, you can attempt next stage whenever you want.
-    Books - Suppressions and Realizations require certain books.
+    !!! Only toggle this off if you're a madman and want to watch the world burn FOR EVERYONE in your AP run, as it has high chance of BKing everyone.
     """
     
-    display_name = "Floor Progression"
-    option_alwaysopen = 0
-    option_books = 1
-    default = 1
+    display_name = "Floors Require Books"
+    default = True
 
 class RandomizeBlackSilencePage(Toggle):
     """
@@ -252,19 +249,15 @@ class RandomizeBlackSilencePage(Toggle):
     display_name = "Randomize Black Silence Page Location"
     default = True
 
-class DeckProgression(Choice):
+class BalanceBookContents(Toggle):
     """
-    Select the progression of Key & Combat Pages on your playthrough.
-    You get books to access new receptions, and this option changes their contents.
-
-    ProgressBased - Contents of the books change based on what foe awaits you in the battle you're about to take
-                    and your overall progress. Best used with Book of Everything Filler Items.
-    CompletelyRandom - Contents of the books are completely random. Best used with Booster Pack Filler Items.
+    If 'true', Every vanilla book's Combat and Key Pages will be balanced around the chapter of the stage they're required in
+    or chapter of the highest chapter stage available.
+    
+    This setting will default drops to chapter of the book in vanilla game if it's not required in floor/reception.
     """
-    display_name = "Deck Progression"
-    option_progressbased = 0
-    option_completelyrandom = 1
-    default = 0
+    display_name = "Balance Book Contents"
+    default = True
 
 ### ITEMS###
 class PassivePointsItems(Range):
@@ -443,9 +436,9 @@ class LOROptions(PerGameCommonOptions):
     enemies_turn_into_checks: EnemiesTurnIntoChecks
     abno_randomization: AbnoRandomization
     shuffle_realizations: ShuffleRealizations
-    floor_progression: FloorProgression
+    floors_require_books: FloorsRequireBooks
     randomize_black_silence_page: RandomizeBlackSilencePage
-    deck_progression: DeckProgression
+    balance_book_contents: BalanceBookContents
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems

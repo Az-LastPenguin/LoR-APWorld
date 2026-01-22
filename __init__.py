@@ -164,6 +164,7 @@ class LORWorld(World):
                 books = []
                 for b in node.req_books:
                     books.append(books_dict[b].name)
+                    
                 set_rule(stage_region.entrances[0], lambda state, books=books: 
                          state.has_all(books, self.player) 
                          and logic.lor_has_floor(i, state, self.player) 
@@ -235,8 +236,8 @@ class LORWorld(World):
         pass
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
-        input()
-        visualize_regions(self.multiworld.get_region("Menu", self.player), "my_world.puml")
+        # input()
+        visualize_regions(self.multiworld.get_region("Menu", self.player), "lorap.puml")
 
         slot_data = self.options.as_dict(
             "random_seed",
@@ -251,10 +252,10 @@ class LORWorld(World):
             "enemies_turn_into_checks",
             "abno_randomization",
             "shuffle_realizations",
-            "floor_progression",
+            "floors_require_books",
             "randomize_black_silence_page",
+            "balance_book_contents",
             "filler_items",
-            "deck_progression",
             )
 
         for l in self.multiworld.get_locations(self.player):

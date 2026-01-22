@@ -99,7 +99,7 @@ def setup_locations(random: random.Random, options: LOROptions):
             f.realization_stage = stages.pop(0)
 
     # Set book requirements
-    if options.receptions_progression == 2 or options.receptions_progression == 3 or options.floor_progression == 1:
+    if options.receptions_progression == 2 or options.receptions_progression == 3 or options.floors_require_books:
         book_pool: list[BookInfo] = books.copy()
 
         # Remove ~10% of the books from the pool, frees up the space for misc items
@@ -119,7 +119,7 @@ def setup_locations(random: random.Random, options: LOROptions):
                 if tree.get_depth(n.id) > 2:
                     stages.append(n)
 
-        if options.floor_progression == 1:
+        if options.floors_require_books:
             for stage in floor_stages:
                 stage.req_books.append(book_pool.pop(random.randint(0, len(book_pool)-1)).id)
                 stages.append(stage)
