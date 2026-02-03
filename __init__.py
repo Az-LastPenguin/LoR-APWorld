@@ -20,7 +20,7 @@ class LORWorld(World):
     game = "Library of Ruina" 
     options_dataclass = LOROptions
     options: LOROptions
-    topology_present = True  # show path to required location checks in spoiler
+    topology_present = True
 
     item_name_to_id = items_name_to_id
     location_name_to_id = locations_name_to_id
@@ -29,11 +29,6 @@ class LORWorld(World):
     floors: list[Floor] = []
 
     def generate_early(self) -> None:
-        # Check for option conflicts # NOTE: Might be possible to implement, so commented out for now
-        #if self.options.filler_items == 0 and (self.options.receptions_progression != 1 or self.options.receptions_progression != 3):
-        #    raise OptionError(f"{self.player_name}'s Library of ruina has Book of Everything selected as a filler item, but"
-        #                      f" Receptions Progreession is not set to Progression or ProgressionBooks!")
-
         # Set Randomization Seed
         if self.options.random_seed.value < 0:
             self.options.random_seed.value = int(time.time())
@@ -44,7 +39,7 @@ class LORWorld(World):
         self.reception_tree, self.floors = setup_locations(self.random, self.options)
 
         # Precollect unlocked floors
-        if self.options.lock_floors.value: # I am very fond of long-ass one-liners
+        if self.options.lock_floors.value:
             floor = items_by_category["FloorUnlock"][self.random.randint(0,9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value].name
             self.multiworld.push_precollected(self.create_item(floor))
             items_by_name[floor].copies = 0
@@ -78,9 +73,9 @@ class LORWorld(World):
 
         # Precollect or add to the pool the "Combat Page Exclusiveness Remove" item
         if self.options.remove_exclusive == 1:
-            items_by_name["Combat Page Exclusiveness Remove"].copies = 1
+            items_by_name["Combat Page Exclusiveness Removal"].copies = 1
         else:
-            self.multiworld.push_precollected(self.create_item("Combat Page Exclusiveness Remove"))
+            self.multiworld.push_precollected(self.create_item("Combat Page Exclusiveness Removal"))
 
         # Remove "The Black Silence's Page" from the pool if randomize_black_silence_page is false
         if not self.options.randomize_black_silence_page:
@@ -116,61 +111,48 @@ class LORWorld(World):
         for node in self.reception_tree.reception_nodes:
             this_region: Region = self.multiworld.get_region(node.name, self.player)
 
-            # First we connect each region to the next
-            if self.options.receptions_progression == 0 or self.options.receptions_progression == 2:
-                # If it's those options, every reception is available from start and is also the last reception
-                menu.connect(this_region)
-            else:
-                for nn in node.next:
-                    this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
+            # First we connect each region to it's the next regions
+            for nn in node.next:
+                this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
 
             # Require Books
             for entrance in this_region.entrances:
                 books = []
+                
+                # If book requirements aren't on, it'll be an empty list
                 for b in node.req_books:
                     books.append(books_dict[b].name)
+                        
                 set_rule(entrance, lambda state, books=books: state.has_all(books, self.player) and logic.lor_enough_librarians(node.req_librarians, state, self.player))
 
-        # 4. Create regions for abnos and connect them, also add rules
-        max_depth = self.reception_tree.get_depth(self.reception_tree.last_reception)
-        part = (max_depth - 2) / 5
-        for i in range(10):
-            floor = self.floors[i]
-            j = 1
+        # 4. Create regions for abnos/realizations and connect them, also add rules
+        for floor in self.floors:
+            prev_stage = menu
+            
             for stage in [*floor.abno_stages, floor.realization_stage]:
                 stage_region = Region(stage.name, self.player, self.multiworld)
                 self.multiworld.regions.append(stage_region)
-
+                
                 # Create locations
                 for k in range(stage.checks):
                     location_name = f"{stage.name} ({k+1})"
 
                     location = LORLocation(self.player, location_name, locations_name_to_id[location_name], stage_region)
                     stage_region.locations.append(location)
-                    # TODO: Try to disable this rule and see if its good?
-                    # add_item_rule(location, lambda item: item.player != self.player or (not item.name in list(books_by_name.keys()) or item.classification == ItemClassification.filler))
-
-                # Select which region to connect to and connect
-                y = part * j
-                depth = round(y + box_muller_constraint(self.random, -part/2, part/2))
-
-                depth_nodes = self.reception_tree.get_nodes_of_depth(depth)
-                node = depth_nodes[self.random.randint(0, len(depth_nodes)-1) if len(depth_nodes) > 0 else 0]
-                node_region: Region = self.multiworld.get_region(node.name, self.player)
-
-                node_region.connect(stage_region)
-                
+        
+                # Connect regions
+                prev_stage.connect(stage_region)
+                prev_stage = stage_region
+        
                 # Set rule
                 books = []
-                for b in node.req_books:
+                for b in stage.req_books:
                     books.append(books_dict[b].name)
                     
                 set_rule(stage_region.entrances[0], lambda state, books=books: 
                          state.has_all(books, self.player) 
-                         and logic.lor_has_floor(i, state, self.player) 
-                         and logic.lor_enough_librarians_on_floor(i, stage.req_librarians, state, self.player))
-
-                j += 1
+                         and logic.lor_has_floor(floor.floor_id, state, self.player) 
+                         and logic.lor_enough_librarians_on_floor(floor.floor_id, stage.req_librarians, state, self.player))
 
         # 5. Create endgame region, connect it to the last reception
         endgame = Region("Endgame", self.player, self.multiworld)
@@ -193,14 +175,8 @@ class LORWorld(World):
         self.multiworld.completion_condition[self.player] = lambda state: state.has("One Perfect Book Achieved", self.player)
 
         # Connect endgame region to mid
-        if self.options.receptions_progression == 0 or self.options.receptions_progression == 2:
-            for node in self.reception_tree.reception_nodes:
-                this_region: Region = self.multiworld.get_region(node.name, self.player)
-
-                this_region.connect(endgame)
-        else:
-            last_node = self.multiworld.get_region(self.reception_tree.get_node(self.reception_tree.last_reception).name, self.player)
-            last_node.connect(endgame)
+        last_node = self.multiworld.get_region(self.reception_tree.get_node(self.reception_tree.last_reception).name, self.player)
+        last_node.connect(endgame)
 
         self.multiworld.regions.append(endgame)
 
@@ -248,14 +224,15 @@ class LORWorld(World):
             "exodia_guaratnee",
             "ego_page_shuffle",
             "randomize_reception_tree",
-            "receptions_progression",
-            "enemies_turn_into_checks",
-            "abno_randomization",
+            # "receptions_require_previous",
+            "receptions_require_books",
+            "shuffle_abnos",
             "shuffle_realizations",
             "floors_require_books",
             "randomize_black_silence_page",
             "balance_book_contents",
-            "filler_items",
+            "enemies_turn_into_checks",
+            # "filler_items",
             )
 
         for l in self.multiworld.get_locations(self.player):

@@ -152,89 +152,74 @@ class PageRandomization(Choice):
 class RandomizeReceptionTree(Toggle):
     """
     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
-    unique for each Seed. First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
+    unique for each Seed. 
+    
+    First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
     """
 
     display_name = "Randomize Reception Tree"
     default = True
 
-class ReceptionMixing(Choice): # TODO: Fix
-    # Basically, if ordered, there is a repeated check of random, 50% chance to pick a farther reception
-    # And if grouped, receptions are grouped by their in-game chapters, 25% chance to pick a farther group
+#class ReceptionsRequirePrevious(Toggle): # NOTE: Honestly idk, makes my life easier without it.
+#    """
+#    If 'true', to access a reception you have to complete atleast one of it's previous receptions.
+#    """
+#
+#    display_name = "Receptions Require Previous"
+#    default = True
+
+class ReceptionsRequireBooks(Toggle):
     """
-    Select the way receptions' place on the tree is going to be randomized.
-
-    Ordered - When reception is randomized, it's selected from an ordered list. Lower chance of later receptions
-              appearing early on.
-    Grouped - When reception is randomized, it's selected from a group of receptions. Higher chance of later receptions
-              appearing early on.
-    """
-
-    display_name = "Reception Mixing"
-    option_ordered = 0
-    option_grouped = 1
-    default = 0
-
-class ReceptionsProgression(Choice): # TODO: Change into "Receptions Require Books" as it doesn't really make sense having 4 options with 2 being almost entirely the same
-    """
-    Select the way receptions progress in the game.
-
-    Unlocked - Every reception is unlocked from the start. Endgoals are also unlocked.
-    Progressive - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
-                  reception in the reception tree unlocks access to the endgoals.
-    Books - Every reception requires books to send invitation. Endgoals are unlocked. !!!BE AWARE that this setting follows NO logical progression, and you might as well just get Xiao after Rats!!!
-    ProgressiveBooks - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
-                       Required books are randomized. Endgoal access is same as 'Paths' option.
-
-    Receptions in Unlocked & Books are represented not in a tree form in-game.
+    If 'true', every reception will require books to send invitation.
+    
+    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
     """
 
-    display_name = "Receptions Progression"
-    option_unlocked = 0
-    option_progressive = 1
-    option_books = 2
-    option_progressivebooks = 3
-    default = 3
-
-class EnemiesTurnIntoChecks(Toggle):
-    """
-    If 'true', instead of receiving Checks after completing the Reception, You get one check for each defeated enemy.
-    (There CAN be more checks than there is enemies!)
-
-    If you really hate yourself and want to complete some receptions more than once.
-    """
-
-    display_name = "Enemies Turn Into Checks"
+    display_name = "Receptions Require Books"
     default = True
 
-class AbnoRandomization(Choice):
-    """
-    Select the way Abnormality suppressions order is randomized in the game.
+#class ReceptionsProgression(Choice):
+#    """
+#    Select the way receptions progress in the game.
+#
+#    Unlocked - Every reception is unlocked from the start. Endgoals are also unlocked.
+#    Progressive - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
+#                  reception in the reception tree unlocks access to the endgoals.
+#    Books - Every reception requires books to send invitation. Endgoals are unlocked. !!!BE AWARE that this setting follows NO logical progression, and you might as well just get Xiao after Rats!!!
+#    ProgressiveBooks - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
+#                       Required books are randomized. Endgoal access is same as 'Paths' option.
+#
+#    Receptions in Unlocked & Books are represented not in a tree form in-game.
+#    """
+#
+#    display_name = "Receptions Progression"
+#    option_unlocked = 0
+#    option_progressive = 1
+#    option_books = 2
+#    option_progressivebooks = 3
+#    default = 3
 
-    None - Abnormality order is exact same as in vanilla.
-    InFloorShuffle - Suppressions' order is shuffled in their floors.
-    Shuffle - Suppressions' are shuffled between the floors. (Example: The Knight of Despair(Tiphereth II) instead of Singing Machine(Yesod III))
+class ShuffleAbnos(Toggle):
+    """
+    If 'true', Abnormalities will be shuffled between the floors
     """
 
-    display_name = "Abnormality Randomization"
-    option_none = 0
-    option_infloorshuffle = 1
-    option_shuffle = 2
-    default = 2
+    display_name = "Shuffle Abnormalities"
+    default = True
 
 class ShuffleRealizations(Toggle):
     """
-    If 'true', Realizations are shuffled between the Floors. (Example: Keter Realization in Binah's Floor)
+    If 'true', Realizations will be shuffled between the Floors.
     """
 
-    display_name = "Realization Randomization"
+    display_name = "Shuffle Realizations"
     default = True
 
 class FloorsRequireBooks(Toggle):
     """
     If 'true', Abnormality Suppressions and Realizations will require books.
 
-    !!! Only toggle this off if you're a madman and want to watch the world burn FOR EVERYONE in your AP run, as it has high chance of BKing everyone.
+    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
     """
     
     display_name = "Floors Require Books"
@@ -257,6 +242,17 @@ class BalanceBookContents(Toggle):
     This setting will default drops to chapter of the book in vanilla game if it's not required in floor/reception.
     """
     display_name = "Balance Book Contents"
+    default = True
+
+class EnemiesTurnIntoChecks(Toggle):
+    """
+    If 'true', instead of receiving Checks after completing the Reception, You get one check for each defeated enemy.
+    (There CAN be more checks than there is enemies!)
+
+    If you really hate yourself and want to complete some receptions more than once.
+    """
+
+    display_name = "Enemies Turn Into Checks"
     default = True
 
 ### ITEMS###
@@ -335,14 +331,12 @@ class StartingEmotionLimitsItems(Range):
 
 class ExclusivenessRemove(Choice):
     """
-    Select if Combat Pages Exclusiveness should be removed.
+    Select if "Combat Page Exclusiveness Removal" item should be added to the pool.
 
-    Don't Remove - Combat Pages that are Exclusive in vanilla stay Exclusive.
-    Item - An "Combat Page Exclusiveness Remove" item is added to the pool, when acquired, every Exclusive page becomes non-Exclusive.
-    Remove - Combat Page Exclusiveness is removed.
+    I think option names are self explainatory?
     """
-    display_name = "Remove Combat Page Exclusiveness"
-    option_dontremove = 0
+    display_name = "Combat Page Exclusiveness Remova"
+    option_dontadd = 0
     option_item = 1
     option_remove = 2
     default = 1
@@ -431,14 +425,14 @@ class LOROptions(PerGameCommonOptions):
     page_randomization: PageRandomization
     # Progression
     randomize_reception_tree: RandomizeReceptionTree
-    reception_mixing: ReceptionMixing
-    receptions_progression: ReceptionsProgression
-    enemies_turn_into_checks: EnemiesTurnIntoChecks
-    abno_randomization: AbnoRandomization
+    # receptions_require_previous: ReceptionsRequirePrevious
+    receptions_require_books: ReceptionsRequireBooks
+    shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations
     floors_require_books: FloorsRequireBooks
     randomize_black_silence_page: RandomizeBlackSilencePage
     balance_book_contents: BalanceBookContents
+    enemies_turn_into_checks: EnemiesTurnIntoChecks
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems

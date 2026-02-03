@@ -4,7 +4,7 @@ from BaseClasses import Location, ItemClassification
 from .options import LOROptions
 from .util import box_muller_constraint
 from .gamedata.receptions import ReceptionNode, reception_nodes, receptions_dict
-from .gamedata.abnormalities import Floor, FloorStage, floors, floor_stages
+from .gamedata.abnormalities import Floor, FloorStage, vanilla_floors, vanilla_floor_stages
 from .gamedata.books import BookInfo, books
 from .items import items_by_name
 
@@ -16,15 +16,16 @@ class LORLocationData:
     id: int
     name: str
  
+# Create locations for every stage
 reception_locations: list[LORLocationData] = []
 for i, r in receptions_dict.items():
     for j in range(r.checks):
         reception_locations.append(LORLocationData(r.id | (j << 28), r.name+" ("+str(j+1)+")"))
 
 abno_locations: list[LORLocationData] = []
-for s in floor_stages:
+for s in vanilla_floor_stages:
     for i in range(s.checks):
-        abno_locations.append(LORLocationData(r.id | (i << 28), s.name+" ("+str(i+1)+")"))
+        abno_locations.append(LORLocationData(s.id | (i << 28), s.name+" ("+str(i+1)+")"))
 
 all_locations = [location for location in [*reception_locations, *abno_locations]]
 locations_id_to_name = {location.id: location.name for location in all_locations}
@@ -62,7 +63,7 @@ class ReceptionTree:
 
         
 def setup_locations(random: random.Random, options: LOROptions):
-    # Create the reception tree
+    # Create the reception tree & randomize if needed
     tree = ReceptionTree()
     tree.reception_nodes = reception_nodes if options.randomize_reception_tree.value == 0 else generate_reception_tree(random, options)
     tree.first_reception = tree.reception_nodes[0].id
@@ -70,36 +71,41 @@ def setup_locations(random: random.Random, options: LOROptions):
     tree.calc_depth()
 
     # Randomize abnos/realizations if needed
-    run_floors = floors.copy()
-    if options.abno_randomization.value == 1:
-        for f in run_floors:
-            random.shuffle(f.abno_stages)
-    elif options.abno_randomization == 2:
-        stages = []
-        for f in run_floors:
-            stages.extend(f.abno_stages)
+    floors = vanilla_floors.copy()
+    
+    if options.shuffle_abnos:
+        # Put all abnos in a list according to their chapter
+        abnos_per_chapter = [ [] for _ in range(7) ]
+        for floor in floors:
+            for stage in floor.abno_stages:
+                abnos_per_chapter[stage.chapter-1].append(stage)
+                
+            floor.abno_stages = [None]*len(floor.abno_stages) # Replace with None to fill later on
         
-        random.shuffle(stages)
-
-        for f in run_floors:
-            abnos = len(f.abno_stages)
-            f.abno_stages.clear()
-
-            for i in range(abnos):
-                f.abno_stages.append(stages.pop(0))
-
-    if options.shuffle_realizations == 1:
-        stages = []
-        for f in run_floors:
-            stages.append(f.realization_stage)
+        # Shuffle contents of every list and combine it into a single list
+        all_abnos = []
+        for l in abnos_per_chapter:
+            random.shuffle(l) 
+            all_abnos.extend(l) # TODO: Maybe add a way to randomly mistplace things in a list after combining, any amount of times for further randomization?
         
-        random.shuffle(stages)
+        # Randomly fill every floor with stages
+        while len(all_abnos) > 0:
+            floors_to_fill = [floor for floor in floors if None in floor.abno_stages]
+            
+            floor = random.choice(floors_to_fill)
+            
+            floor.abno_stages[floor.abno_stages.index(None)] = all_abnos.pop(0)
 
-        for f in run_floors:
-            f.realization_stage = stages.pop(0)
+    if options.shuffle_realizations:
+        realizations = [floor.realization_stage for floor in floors]
+        
+        random.shuffle(realizations)
+        
+        for floor in floors:
+            floor.realization_stage = realizations.pop(0)
 
     # Set book requirements
-    if options.receptions_progression == 2 or options.receptions_progression == 3 or options.floors_require_books:
+    if options.receptions_require_books or options.floors_require_books:
         book_pool: list[BookInfo] = books.copy()
 
         # Remove ~10% of the books from the pool, frees up the space for misc items
@@ -110,7 +116,7 @@ def setup_locations(random: random.Random, options: LOROptions):
 
         # One book for each reception/abno
         stages: list[ReceptionNode | FloorStage] = []
-        if options.receptions_progression == 2 or options.receptions_progression == 3:
+        if options.receptions_require_books:
             for n in tree.reception_nodes:
                 if n.id == tree.first_reception: continue
 
@@ -120,7 +126,7 @@ def setup_locations(random: random.Random, options: LOROptions):
                     stages.append(n)
 
         if options.floors_require_books:
-            for stage in floor_stages:
+            for stage in vanilla_floor_stages:
                 stage.req_books.append(book_pool.pop(random.randint(0, len(book_pool)-1)).id)
                 stages.append(stage)
 
@@ -140,7 +146,7 @@ def setup_locations(random: random.Random, options: LOROptions):
         for book in books:
             items_by_name[book.name].type = ItemClassification.useful
 
-    return tree, run_floors
+    return tree, floors
 
 ## RECEPTION RANDOMIZATON
 def generate_reception_tree(random: random.Random, options: LOROptions):
@@ -190,19 +196,12 @@ def generate_reception_tree(random: random.Random, options: LOROptions):
         for _ in range(v):
             # Select which reception from the queue is gonna be placed here
             node = None
-            if options.reception_mixing == 0: # Ordered
-                ri = 0
-                while ri < len(all_nodes)-1 and random.random() >= 0.5:
-                    ri += 1
-                    
-                node = all_nodes.pop(ri)
-            elif options.reception_mixing == 1: # Grouped
-                chapter = 0
-                while chapter < len(all_nodes_chaptered) and (len(all_nodes_chaptered[chapter]) == 0 or random.random() >= 0.75):
-                    chapter += 1
+            
+            ri = 0
+            while ri < len(all_nodes)-1 and random.random() >= 0.5:
+                ri += 1
                 
-                node = all_nodes_chaptered[chapter].pop(0)
-
+            node = all_nodes.pop(ri)
             node.y = i
             node.next = []
 

@@ -11,9 +11,9 @@ def lor_enough_librarians(need: int, state: CollectionState, player: int) -> boo
 def lor_enough_librarians_on_floor(id: int, need: int, state: CollectionState, player: int) -> bool:
     librarian_items = [f.name for f in items_by_category["Librarian"]]
 
-    return state.has(librarian_items[id], player, need-1)
+    return state.has(librarian_items[id-1], player, need-1)
 
 def lor_has_floor(id: int, state: CollectionState, player: int) -> bool:
     floor_names = [f.name for f in items_by_category["FloorUnlock"]]
 
-    return state.has(floor_names[id], player)
+    return state.has(floor_names[id-1], player)

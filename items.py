@@ -132,7 +132,7 @@ item_list: list[LORItemData] = [
 
     OtherItem(id=3, name="Binah", copies=1), # Fixed amount
     OtherItem(id=4, name="The Black Silence's Page", copies=1), # Fixed amount
-    OtherItem(id=5, name="Combat Page Exclusiveness Remove"), # Depends on an option
+    OtherItem(id=5, name="Combat Page Exclusiveness Removal"), # Depends on an option
 ]
 
 items_by_category: dict[str, list[LORItemData]] = {item_type: [item for item in item_list if item.type_id == item_type] for item_type in item_types}
