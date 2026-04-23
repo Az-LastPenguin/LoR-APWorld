@@ -1,4 +1,5 @@
 import typing, time
+import logging
 
 from Options import OptionError
 from . import logic
@@ -6,7 +7,7 @@ from .options import LOROptions
 from .items import LORItem, LORItemData, items_by_id, items_by_name, items_by_category, items_name_to_id
 from .locations import LORLocation, ReceptionTree, setup_locations, locations_name_to_id
 from .gamedata.receptions import ReceptionNode, receptions_dict, receptions_by_name, endgoal_receptions
-from .gamedata.abnormalities import Floor, FloorStage
+from .gamedata.floors import Floor, FloorStage
 from .gamedata.books import books_dict, books_by_name
 from .util import box_muller_constraint
 from worlds.AutoWorld import World
@@ -21,12 +22,17 @@ class LORWorld(World):
     options_dataclass = LOROptions
     options: LOROptions
     topology_present = True
+    explicit_indirect_conditions = False
 
     item_name_to_id = items_name_to_id
     location_name_to_id = locations_name_to_id
 
     reception_tree: ReceptionTree = None
     floors: list[Floor] = []
+
+    logger = logging.getLogger()
+
+    # def precollect_if
 
     def generate_early(self) -> None:
         # Set Randomization Seed
@@ -43,6 +49,7 @@ class LORWorld(World):
             floor = items_by_category["FloorUnlock"][self.random.randint(0,9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value].name
             self.multiworld.push_precollected(self.create_item(floor))
             items_by_name[floor].copies = 0
+            self.logger.info(floor)
         else:
             for fi in items_by_category["FloorUnlock"]:
                 self.multiworld.push_precollected(self.create_item(fi.name))
@@ -97,6 +104,12 @@ class LORWorld(World):
                 location = LORLocation(self.player, location_name, locations_name_to_id[location_name], node_region)
                 node_region.locations.append(location)
 
+                # Disallow placing anything but important books in Rats reception to ensure logic doesn't fuck up
+                if node.name == "Rats":
+                    # location.item_rule = lambda item: items_by_id[item.code].type_id == "Book"
+                    location.progress_type = LocationProgressType.PRIORITY
+
+
             self.multiworld.regions.append(node_region)
 
         # 2.1 Pre-place Black Silence Page at Oliver Reception if needed
@@ -115,44 +128,53 @@ class LORWorld(World):
             for nn in node.next:
                 this_region.connect(self.multiworld.get_region(self.reception_tree.get_node(nn).name, self.player))
 
+            books = []
+                
+            # If book requirements aren't on, it'll be an empty list
+            for b in node.req_books:
+                books.append(books_dict[b].name)
+
+            self.logger.info(f"{node.name} {books}")
+
             # Require Books
             for entrance in this_region.entrances:
-                books = []
-                
-                # If book requirements aren't on, it'll be an empty list
-                for b in node.req_books:
-                    books.append(books_dict[b].name)
-                        
                 set_rule(entrance, lambda state, books=books: state.has_all(books, self.player) and logic.lor_enough_librarians(node.req_librarians, state, self.player))
 
         # 4. Create regions for abnos/realizations and connect them, also add rules
         for floor in self.floors:
-            prev_stage = menu
-            
+            prev_stage = self.multiworld.get_region("Rats", self.player)
+            self.logger.info(floor.seph)
             for stage in [*floor.abno_stages, floor.realization_stage]:
                 stage_region = Region(stage.name, self.player, self.multiworld)
                 self.multiworld.regions.append(stage_region)
                 
                 # Create locations
                 for k in range(stage.checks):
-                    location_name = f"{stage.name} ({k+1})"
+                    location_name = f"{stage.name} ({k+1})" # TODO: Randomly place abnos after receptions ig
 
                     location = LORLocation(self.player, location_name, locations_name_to_id[location_name], stage_region)
                     stage_region.locations.append(location)
+
+                    # Filter specifically progression items
+                    # location.item_rule = lambda item: item.player != self.player or item.classification & 0b1 != 0b1
         
                 # Connect regions
                 prev_stage.connect(stage_region)
                 prev_stage = stage_region
         
                 # Set rule
-                books = []
+                # Require books
+                requirements = []
                 for b in stage.req_books:
-                    books.append(books_dict[b].name)
-                    
-                set_rule(stage_region.entrances[0], lambda state, books=books: 
-                         state.has_all(books, self.player) 
-                         and logic.lor_has_floor(floor.floor_id, state, self.player) 
-                         and logic.lor_enough_librarians_on_floor(floor.floor_id, stage.req_librarians, state, self.player))
+                    requirements.append(books_dict[b].name)
+
+                self.logger.info(f"{stage.name} {requirements}")
+
+                # Require floor
+                requirements.append(f"{floor.seph} Floor")
+                
+                for entrance in stage_region.entrances:
+                    set_rule(entrance, lambda state, requirements=requirements: state.has_all(requirements, self.player) and state.has(f"{floor.seph} Librarian", self.player, stage.req_librarians - 1 - (1 if floor.seph == "Binah" and state.has("Binah", self.player) else 0)))
 
         # 5. Create endgame region, connect it to the last reception
         endgame = Region("Endgame", self.player, self.multiworld)
@@ -188,7 +210,6 @@ class LORWorld(World):
         return LORItem(event, ItemClassification.progression, None, self.player)
 
     def create_items(self) -> None:
-        # Test item pool
         itempool: list[str] = [] 
     
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
@@ -208,12 +229,14 @@ class LORWorld(World):
         # Set the item pool
         self.multiworld.itempool += map(self.create_item, itempool)
 
+        visualize_regions(self.multiworld.get_region("Menu", self.player), "lorap.puml")
+
     def set_rules(self) -> None:
         pass
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
-        # input()
         visualize_regions(self.multiworld.get_region("Menu", self.player), "lorap.puml")
+        input()
 
         slot_data = self.options.as_dict(
             "random_seed",

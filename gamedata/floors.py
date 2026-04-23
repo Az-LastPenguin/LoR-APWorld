@@ -6,8 +6,8 @@ from typing import Literal
 
 @dataclass
 class Floor:
-    floor_id: int # id of the floor this class represents (1-9 are Malkuth-Hokma, 10 is Keter)
-    floor_name: str
+    id: int # id of the floor this class represents (1-9 are Malkuth-Hokma, 10 is Keter)
+    seph: str # used for checking if floor has enough librarians & if it's opened
     abno_stages: list['FloorStage'] # stages with abnormalities
     realization_stage: 'FloorStage' # stage with floor's realization
 
@@ -23,8 +23,8 @@ class FloorStage:
 vanilla_floors: list[Floor] = [
     # Malkuth
     Floor(
-        floor_id=1,
-        floor_name="Malkuth Floor",
+        id=1,
+        seph="Malkuth",
         abno_stages=[
             FloorStage(id=201001, name="Scorched Girl", checks=3, chapter=1),
             FloorStage(id=201002, name="Happy Teddy Bear", checks=3, chapter=3),
@@ -36,8 +36,8 @@ vanilla_floors: list[Floor] = [
 
     # Yesod
     Floor(
-        floor_id=2,
-        floor_name="Yesod Floor",
+        id=2,
+        seph="Yesod",
         abno_stages=[
             FloorStage(id=202001, name="Forsaken Murderer", checks=3, chapter=2),
             FloorStage(id=202002, name="All-Around Helper", checks=3, chapter=3),
@@ -49,8 +49,8 @@ vanilla_floors: list[Floor] = [
 
     # Hod
     Floor(
-        floor_id=3,
-        floor_name="Hod Floor",
+        id=3,
+        seph="Hod",
         abno_stages=[
             FloorStage(id=203001, name="Today's Shy Look", checks=3, chapter=2),
             FloorStage(id=203002, name="The Red Shoes", checks=3, chapter=3),
@@ -62,8 +62,8 @@ vanilla_floors: list[Floor] = [
 
     # Netzach
     Floor(
-        floor_id=4,
-        floor_name="Netzach Floor",
+        id=4,
+        seph="Netzach",
         abno_stages=[
             FloorStage(id=204001, name="Fragment of the Universe", checks=3, chapter=3),
             FloorStage(id=204002, name="Child of the Galaxy", checks=3, chapter=3),
@@ -75,8 +75,8 @@ vanilla_floors: list[Floor] = [
 
     # Tiphereth
     Floor(
-        floor_id=5,
-        floor_name="Tiphereth Floor",
+        id=5,
+        seph="Tiphereth",
         abno_stages=[
             FloorStage(id=205001, name="The Queen of Hatred", checks=3, chapter=4),
             FloorStage(id=205002, name="The Knight of Despair", checks=3, chapter=4),
@@ -88,8 +88,8 @@ vanilla_floors: list[Floor] = [
 
     # Gebura
     Floor(
-        floor_id=6,
-        floor_name="Gebura Floor",
+        id=6,
+        seph="Gebura",
         abno_stages=[
             FloorStage(id=206001, name="Little Red Riding Hooded Mercenary", checks=3, chapter=5),
             FloorStage(id=206002, name="Big and Will be Bad Wolf", checks=3, chapter=5),
@@ -101,8 +101,8 @@ vanilla_floors: list[Floor] = [
 
     # Chesed
     Floor(
-        floor_id=7,
-        floor_name="Chesed Floor",
+        id=7,
+        seph="Chesed",
         abno_stages=[
             FloorStage(id=207001, name="Scarecrow Searching for Wisdom", checks=3, chapter=5),
             FloorStage(id=207002, name="Warm-hearted Woodsman", checks=3, chapter=5),
@@ -114,8 +114,8 @@ vanilla_floors: list[Floor] = [
 
     # Binah
     Floor(
-        floor_id=8,
-        floor_name="Binah Floor",
+        id=8,
+        seph="Binah",
         abno_stages=[
             FloorStage(id=208001, name="Big Bird", checks=3, req_librarians=2, chapter=6),
             FloorStage(id=208002, name="Punishing Bird", checks=3, chapter=6),
@@ -126,8 +126,8 @@ vanilla_floors: list[Floor] = [
 
     # Hokma
     Floor(
-        floor_id=9,
-        floor_name="Hokma Floor",
+        id=9,
+        seph="Hokma",
         abno_stages=[
             FloorStage(id=209001, name="The Burrowing Heaven", checks=3, chapter=6),
             FloorStage(id=209002, name="The Price of Silence", checks=3, req_librarians=2, chapter=6),
@@ -138,8 +138,8 @@ vanilla_floors: list[Floor] = [
 
     # Keter
     Floor(
-        floor_id=10,
-        floor_name="Keter Floor",
+        id=10,
+        seph="Keter",
         abno_stages=[
             FloorStage(id=210001, name="Bloodbath", checks=3, chapter=1),
             FloorStage(id=210002, name="Heart of Aspiration", checks=3, chapter=3),
@@ -149,5 +149,5 @@ vanilla_floors: list[Floor] = [
         realization_stage=FloorStage(id=210009, name="Keter Realization", checks=8, chapter=7),
     ),
 ]
-vanilla_floors_dict: dict[int, Floor] = {floor.floor_id: floor for floor in vanilla_floors}
+vanilla_floors_dict: dict[int, Floor] = {floor.id: floor for floor in vanilla_floors}
 vanilla_floor_stages = [stage for floor in vanilla_floors for stage in [*floor.abno_stages, floor.realization_stage]]

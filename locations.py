@@ -4,7 +4,7 @@ from BaseClasses import Location, ItemClassification
 from .options import LOROptions
 from .util import box_muller_constraint
 from .gamedata.receptions import ReceptionNode, reception_nodes, receptions_dict
-from .gamedata.abnormalities import Floor, FloorStage, vanilla_floors, vanilla_floor_stages
+from .gamedata.floors import Floor, FloorStage, vanilla_floors, vanilla_floor_stages
 from .gamedata.books import BookInfo, books
 from .items import items_by_name
 
@@ -30,6 +30,7 @@ for s in vanilla_floor_stages:
 all_locations = [location for location in [*reception_locations, *abno_locations]]
 locations_id_to_name = {location.id: location.name for location in all_locations}
 locations_name_to_id = {location.name: location.id for location in all_locations}
+
 
 
 class ReceptionTree:
@@ -61,7 +62,8 @@ class ReceptionTree:
 
         depth(self.get_node(self.first_reception), -1)
 
-        
+
+
 def setup_locations(random: random.Random, options: LOROptions):
     # Create the reception tree & randomize if needed
     tree = ReceptionTree()
@@ -86,7 +88,7 @@ def setup_locations(random: random.Random, options: LOROptions):
         all_abnos = []
         for l in abnos_per_chapter:
             random.shuffle(l) 
-            all_abnos.extend(l) # TODO: Maybe add a way to randomly mistplace things in a list after combining, any amount of times for further randomization?
+            all_abnos.extend(l) # TODO: Maybe add a way to randomly misplace things in a list after combining, any amount of times for further randomization?
         
         # Randomly fill every floor with stages
         while len(all_abnos) > 0:
@@ -141,16 +143,16 @@ def setup_locations(random: random.Random, options: LOROptions):
 
         # If somehow there are still books, we make them filler items
         for book in book_pool:
-            items_by_name[book.name].type = ItemClassification.useful
+            items_by_name[book.name].type = ItemClassification.filler
     else:
         for book in books:
-            items_by_name[book.name].type = ItemClassification.useful
+            items_by_name[book.name].type = ItemClassification.filler
 
     return tree, floors
 
 ## RECEPTION RANDOMIZATON
 def generate_reception_tree(random: random.Random, options: LOROptions):
-    # Before everything, shuffle receptions in their chapters to make things worse
+    # Before everything, shuffle receptions inside their chapters to make things worse
     copy = reception_nodes.copy()
     first_node = copy.pop(0)
     last_node = copy.pop()

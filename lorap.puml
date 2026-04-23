@@ -1,0 +1,816 @@
+@startuml
+hide circle
+hide empty members
+skinparam linetype ortho
+class "Menu" 
+"Menu" --> "Rats"
+class "Rats" 
+"Rats" : {field} **Rats (1)**
+"Rats" : {field} **Rats (2)**
+"Rats" --> "Yun's Office"
+"Rats" --> "Child of the Galaxy"
+"Rats" --> "The Red Shoes"
+"Rats" --> "Nosferatu"
+"Rats" --> "The Funeral of the Dead Butterflies"
+"Rats" --> "Fragment of the Universe"
+"Rats" --> "All-Around Helper"
+"Rats" --> "Scorched Girl"
+"Rats" --> "Forsaken Murderer"
+"Rats" --> "Bloodbath"
+"Rats" --> "Fairy Festival"
+class "Yun's Office" 
+"Yun's Office" : {field} Yun's Office (1)
+"Yun's Office" : {field} Yun's Office (2)
+"Yun's Office" : {field} Yun's Office (3)
+"Yun's Office" --> "Yun's Office Fixers"
+class "Child of the Galaxy" 
+"Child of the Galaxy" : {field} Child of the Galaxy (1)
+"Child of the Galaxy" : {field} Child of the Galaxy (2)
+"Child of the Galaxy" : {field} Child of the Galaxy (3)
+"Child of the Galaxy" --> "Happy Teddy Bear"
+class "The Red Shoes" 
+"The Red Shoes" : {field} The Red Shoes (1)
+"The Red Shoes" : {field} The Red Shoes (2)
+"The Red Shoes" : {field} The Red Shoes (3)
+"The Red Shoes" --> "Little Red Riding Hooded Mercenary"
+class "Nosferatu" 
+"Nosferatu" : {field} Nosferatu (1)
+"Nosferatu" : {field} Nosferatu (2)
+"Nosferatu" : {field} Nosferatu (3)
+"Nosferatu" --> "The Burrowing Heaven"
+class "The Funeral of the Dead Butterflies" 
+"The Funeral of the Dead Butterflies" : {field} The Funeral of the Dead Butterflies (1)
+"The Funeral of the Dead Butterflies" : {field} The Funeral of the Dead Butterflies (2)
+"The Funeral of the Dead Butterflies" : {field} The Funeral of the Dead Butterflies (3)
+"The Funeral of the Dead Butterflies" --> "The King of Greed"
+class "Fragment of the Universe" 
+"Fragment of the Universe" : {field} Fragment of the Universe (1)
+"Fragment of the Universe" : {field} Fragment of the Universe (2)
+"Fragment of the Universe" : {field} Fragment of the Universe (3)
+"Fragment of the Universe" --> "Alriune"
+class "All-Around Helper" 
+"All-Around Helper" : {field} All-Around Helper (1)
+"All-Around Helper" : {field} All-Around Helper (2)
+"All-Around Helper" : {field} All-Around Helper (3)
+"All-Around Helper" --> "The Knight of Despair"
+class "Scorched Girl" 
+"Scorched Girl" : {field} Scorched Girl (1)
+"Scorched Girl" : {field} Scorched Girl (2)
+"Scorched Girl" : {field} Scorched Girl (3)
+"Scorched Girl" --> "Today's Shy Look"
+class "Forsaken Murderer" 
+"Forsaken Murderer" : {field} Forsaken Murderer (1)
+"Forsaken Murderer" : {field} Forsaken Murderer (2)
+"Forsaken Murderer" : {field} Forsaken Murderer (3)
+"Forsaken Murderer" --> "Spider Bud"
+class "Bloodbath" 
+"Bloodbath" : {field} Bloodbath (1)
+"Bloodbath" : {field} Bloodbath (2)
+"Bloodbath" : {field} Bloodbath (3)
+"Bloodbath" --> "Heart of Aspiration"
+class "Fairy Festival" 
+"Fairy Festival" : {field} Fairy Festival (1)
+"Fairy Festival" : {field} Fairy Festival (2)
+"Fairy Festival" : {field} Fairy Festival (3)
+"Fairy Festival" --> "Big and Will be Bad Wolf"
+class "Yun's Office Fixers" 
+"Yun's Office Fixers" : {field} Yun's Office Fixers (1)
+"Yun's Office Fixers" : {field} Yun's Office Fixers (2)
+"Yun's Office Fixers" --> "Brotherhood of Iron"
+"Yun's Office Fixers" --> "Backstreets Butchers"
+class "Happy Teddy Bear" 
+"Happy Teddy Bear" : {field} Happy Teddy Bear (1)
+"Happy Teddy Bear" : {field} Happy Teddy Bear (2)
+"Happy Teddy Bear" : {field} Happy Teddy Bear (3)
+"Happy Teddy Bear" --> "The Queen of Hatred"
+class "Little Red Riding Hooded Mercenary" 
+"Little Red Riding Hooded Mercenary" : {field} Little Red Riding Hooded Mercenary (1)
+"Little Red Riding Hooded Mercenary" : {field} Little Red Riding Hooded Mercenary (2)
+"Little Red Riding Hooded Mercenary" : {field} Little Red Riding Hooded Mercenary (3)
+"Little Red Riding Hooded Mercenary" --> "Pinocchio"
+class "The Burrowing Heaven" 
+"The Burrowing Heaven" : {field} The Burrowing Heaven (1)
+"The Burrowing Heaven" : {field} The Burrowing Heaven (2)
+"The Burrowing Heaven" : {field} The Burrowing Heaven (3)
+"The Burrowing Heaven" --> "Blue Star"
+class "The King of Greed" 
+"The King of Greed" : {field} The King of Greed (1)
+"The King of Greed" : {field} The King of Greed (2)
+"The King of Greed" : {field} The King of Greed (3)
+"The King of Greed" --> "The Snow Queen"
+class "Alriune" 
+"Alriune" : {field} Alriune (1)
+"Alriune" : {field} Alriune (2)
+"Alriune" : {field} Alriune (3)
+"Alriune" --> "Big Bird"
+class "The Knight of Despair" 
+"The Knight of Despair" : {field} The Knight of Despair (1)
+"The Knight of Despair" : {field} The Knight of Despair (2)
+"The Knight of Despair" : {field} The Knight of Despair (3)
+"The Knight of Despair" --> "Warm-hearted Woodsman"
+class "Today's Shy Look" 
+"Today's Shy Look" : {field} Today's Shy Look (1)
+"Today's Shy Look" : {field} Today's Shy Look (2)
+"Today's Shy Look" : {field} Today's Shy Look (3)
+"Today's Shy Look" --> "Queen Bee"
+class "Spider Bud" 
+"Spider Bud" : {field} Spider Bud (1)
+"Spider Bud" : {field} Spider Bud (2)
+"Spider Bud" : {field} Spider Bud (3)
+"Spider Bud" --> "Scarecrow Searching for Wisdom"
+class "Heart of Aspiration" 
+"Heart of Aspiration" : {field} Heart of Aspiration (1)
+"Heart of Aspiration" : {field} Heart of Aspiration (2)
+"Heart of Aspiration" : {field} Heart of Aspiration (3)
+"Heart of Aspiration" --> "Singing Machine"
+class "Big and Will be Bad Wolf" 
+"Big and Will be Bad Wolf" : {field} Big and Will be Bad Wolf (1)
+"Big and Will be Bad Wolf" : {field} Big and Will be Bad Wolf (2)
+"Big and Will be Bad Wolf" : {field} Big and Will be Bad Wolf (3)
+"Big and Will be Bad Wolf" --> "Laetitia"
+class "Brotherhood of Iron" 
+"Brotherhood of Iron" : {field} Brotherhood of Iron (1)
+"Brotherhood of Iron" : {field} Brotherhood of Iron (2)
+"Brotherhood of Iron" : {field} Brotherhood of Iron (3)
+"Brotherhood of Iron" : {field} Brotherhood of Iron (4)
+"Brotherhood of Iron" : {field} Brotherhood of Iron (5)
+"Brotherhood of Iron" --> "Yun's Office Rookie"
+"Brotherhood of Iron" --> "Lulu of Streetlight"
+class "Backstreets Butchers" 
+"Backstreets Butchers" : {field} Backstreets Butchers (1)
+"Backstreets Butchers" : {field} Backstreets Butchers (2)
+"Backstreets Butchers" --> "Hook Office Remnants"
+class "The Queen of Hatred" 
+"The Queen of Hatred" : {field} The Queen of Hatred (1)
+"The Queen of Hatred" : {field} The Queen of Hatred (2)
+"The Queen of Hatred" : {field} The Queen of Hatred (3)
+"The Queen of Hatred" --> "Porccubus"
+class "Pinocchio" 
+"Pinocchio" : {field} Pinocchio (1)
+"Pinocchio" : {field} Pinocchio (2)
+"Pinocchio" : {field} Pinocchio (3)
+"Pinocchio" --> "The Servant of Wrath"
+class "Blue Star" 
+"Blue Star" : {field} Blue Star (1)
+"Blue Star" : {field} Blue Star (2)
+"Blue Star" : {field} Blue Star (3)
+"Blue Star" --> "Judgement Bird"
+class "The Snow Queen" 
+"The Snow Queen" : {field} The Snow Queen (1)
+"The Snow Queen" : {field} The Snow Queen (2)
+"The Snow Queen" : {field} The Snow Queen (3)
+"The Snow Queen" --> "Mountain of Smiling Bodies"
+class "Big Bird" 
+"Big Bird" : {field} Big Bird (1)
+"Big Bird" : {field} Big Bird (2)
+"Big Bird" : {field} Big Bird (3)
+"Big Bird" --> "The Road Home & Scaredy Cat"
+class "Warm-hearted Woodsman" 
+"Warm-hearted Woodsman" : {field} Warm-hearted Woodsman (1)
+"Warm-hearted Woodsman" : {field} Warm-hearted Woodsman (2)
+"Warm-hearted Woodsman" : {field} Warm-hearted Woodsman (3)
+"Warm-hearted Woodsman" --> "The Price of Silence"
+class "Queen Bee" 
+"Queen Bee" : {field} Queen Bee (1)
+"Queen Bee" : {field} Queen Bee (2)
+"Queen Bee" : {field} Queen Bee (3)
+"Queen Bee" --> "Ozma"
+class "Scarecrow Searching for Wisdom" 
+"Scarecrow Searching for Wisdom" : {field} Scarecrow Searching for Wisdom (1)
+"Scarecrow Searching for Wisdom" : {field} Scarecrow Searching for Wisdom (2)
+"Scarecrow Searching for Wisdom" : {field} Scarecrow Searching for Wisdom (3)
+"Scarecrow Searching for Wisdom" --> "Yesod Realization"
+class "Singing Machine" 
+"Singing Machine" : {field} Singing Machine (1)
+"Singing Machine" : {field} Singing Machine (2)
+"Singing Machine" : {field} Singing Machine (3)
+"Singing Machine" --> "Gebura Realization"
+class "Laetitia" 
+"Laetitia" : {field} Laetitia (1)
+"Laetitia" : {field} Laetitia (2)
+"Laetitia" : {field} Laetitia (3)
+"Laetitia" --> "Punishing Bird"
+class "Yun's Office Rookie" 
+"Yun's Office Rookie" : {field} Yun's Office Rookie (1)
+"Yun's Office Rookie" : {field} Yun's Office Rookie (2)
+class "Lulu of Streetlight" 
+"Lulu of Streetlight" : {field} Lulu of Streetlight (1)
+"Lulu of Streetlight" : {field} Lulu of Streetlight (2)
+class "Hook Office Remnants" 
+"Hook Office Remnants" : {field} Hook Office Remnants (1)
+"Hook Office Remnants" : {field} Hook Office Remnants (2)
+"Hook Office Remnants" --> "Hook Office"
+class "Porccubus" 
+"Porccubus" : {field} Porccubus (1)
+"Porccubus" : {field} Porccubus (2)
+"Porccubus" : {field} Porccubus (3)
+"Porccubus" --> "Binah Realization"
+class "The Servant of Wrath" 
+"The Servant of Wrath" : {field} The Servant of Wrath (1)
+"The Servant of Wrath" : {field} The Servant of Wrath (2)
+"The Servant of Wrath" : {field} The Servant of Wrath (3)
+"The Servant of Wrath" --> "Netzach Realization"
+class "Judgement Bird" 
+"Judgement Bird" : {field} Judgement Bird (1)
+"Judgement Bird" : {field} Judgement Bird (2)
+"Judgement Bird" : {field} Judgement Bird (3)
+"Judgement Bird" --> "Malkuth Realization"
+class "Mountain of Smiling Bodies" 
+"Mountain of Smiling Bodies" : {field} Mountain of Smiling Bodies (1)
+"Mountain of Smiling Bodies" : {field} Mountain of Smiling Bodies (2)
+"Mountain of Smiling Bodies" : {field} Mountain of Smiling Bodies (3)
+"Mountain of Smiling Bodies" --> "Keter Realization"
+class "The Road Home & Scaredy Cat" 
+"The Road Home & Scaredy Cat" : {field} The Road Home & Scaredy Cat (1)
+"The Road Home & Scaredy Cat" : {field} The Road Home & Scaredy Cat (2)
+"The Road Home & Scaredy Cat" : {field} The Road Home & Scaredy Cat (3)
+"The Road Home & Scaredy Cat" --> "Tiphereth Realization"
+class "The Price of Silence" 
+"The Price of Silence" : {field} The Price of Silence (1)
+"The Price of Silence" : {field} The Price of Silence (2)
+"The Price of Silence" : {field} The Price of Silence (3)
+"The Price of Silence" --> "Hod Realization"
+class "Ozma" 
+"Ozma" : {field} Ozma (1)
+"Ozma" : {field} Ozma (2)
+"Ozma" : {field} Ozma (3)
+"Ozma" --> "Hokma Realization"
+class "Yesod Realization" 
+"Yesod Realization" : {field} Yesod Realization (1)
+"Yesod Realization" : {field} Yesod Realization (2)
+"Yesod Realization" : {field} Yesod Realization (3)
+"Yesod Realization" : {field} Yesod Realization (4)
+"Yesod Realization" : {field} Yesod Realization (5)
+"Yesod Realization" : {field} Yesod Realization (6)
+"Yesod Realization" : {field} Yesod Realization (7)
+"Yesod Realization" : {field} Yesod Realization (8)
+class "Gebura Realization" 
+"Gebura Realization" : {field} Gebura Realization (1)
+"Gebura Realization" : {field} Gebura Realization (2)
+"Gebura Realization" : {field} Gebura Realization (3)
+"Gebura Realization" : {field} Gebura Realization (4)
+"Gebura Realization" : {field} Gebura Realization (5)
+"Gebura Realization" : {field} Gebura Realization (6)
+"Gebura Realization" : {field} Gebura Realization (7)
+"Gebura Realization" : {field} Gebura Realization (8)
+class "Punishing Bird" 
+"Punishing Bird" : {field} Punishing Bird (1)
+"Punishing Bird" : {field} Punishing Bird (2)
+"Punishing Bird" : {field} Punishing Bird (3)
+"Punishing Bird" --> "Chesed Realization"
+class "Hook Office" 
+"Hook Office" : {field} Hook Office (1)
+"Hook Office" : {field} Hook Office (2)
+"Hook Office" : {field} Hook Office (3)
+"Hook Office" : {field} Hook Office (4)
+"Hook Office" : {field} Hook Office (5)
+"Hook Office" --> "Urban Legend-class Office"
+"Hook Office" --> "Zwei Crewmembers"
+"Hook Office" --> "Urban Myth-class Syndicate"
+"Hook Office" --> "Streetlight Office"
+"Hook Office" --> "Pierre's Bistro"
+"Hook Office" --> "Zwei Association II"
+class "Binah Realization" 
+"Binah Realization" : {field} Binah Realization (1)
+"Binah Realization" : {field} Binah Realization (2)
+"Binah Realization" : {field} Binah Realization (3)
+"Binah Realization" : {field} Binah Realization (4)
+"Binah Realization" : {field} Binah Realization (5)
+"Binah Realization" : {field} Binah Realization (6)
+"Binah Realization" : {field} Binah Realization (7)
+"Binah Realization" : {field} Binah Realization (8)
+"Binah Realization" : {field} Binah Realization (9)
+"Binah Realization" : {field} Binah Realization (10)
+"Binah Realization" : {field} Binah Realization (11)
+class "Netzach Realization" 
+"Netzach Realization" : {field} Netzach Realization (1)
+"Netzach Realization" : {field} Netzach Realization (2)
+"Netzach Realization" : {field} Netzach Realization (3)
+"Netzach Realization" : {field} Netzach Realization (4)
+"Netzach Realization" : {field} Netzach Realization (5)
+"Netzach Realization" : {field} Netzach Realization (6)
+"Netzach Realization" : {field} Netzach Realization (7)
+"Netzach Realization" : {field} Netzach Realization (8)
+class "Malkuth Realization" 
+"Malkuth Realization" : {field} Malkuth Realization (1)
+"Malkuth Realization" : {field} Malkuth Realization (2)
+"Malkuth Realization" : {field} Malkuth Realization (3)
+"Malkuth Realization" : {field} Malkuth Realization (4)
+"Malkuth Realization" : {field} Malkuth Realization (5)
+"Malkuth Realization" : {field} Malkuth Realization (6)
+"Malkuth Realization" : {field} Malkuth Realization (7)
+"Malkuth Realization" : {field} Malkuth Realization (8)
+class "Keter Realization" 
+"Keter Realization" : {field} Keter Realization (1)
+"Keter Realization" : {field} Keter Realization (2)
+"Keter Realization" : {field} Keter Realization (3)
+"Keter Realization" : {field} Keter Realization (4)
+"Keter Realization" : {field} Keter Realization (5)
+"Keter Realization" : {field} Keter Realization (6)
+"Keter Realization" : {field} Keter Realization (7)
+"Keter Realization" : {field} Keter Realization (8)
+class "Tiphereth Realization" 
+"Tiphereth Realization" : {field} Tiphereth Realization (1)
+"Tiphereth Realization" : {field} Tiphereth Realization (2)
+"Tiphereth Realization" : {field} Tiphereth Realization (3)
+"Tiphereth Realization" : {field} Tiphereth Realization (4)
+"Tiphereth Realization" : {field} Tiphereth Realization (5)
+"Tiphereth Realization" : {field} Tiphereth Realization (6)
+"Tiphereth Realization" : {field} Tiphereth Realization (7)
+"Tiphereth Realization" : {field} Tiphereth Realization (8)
+class "Hod Realization" 
+"Hod Realization" : {field} Hod Realization (1)
+"Hod Realization" : {field} Hod Realization (2)
+"Hod Realization" : {field} Hod Realization (3)
+"Hod Realization" : {field} Hod Realization (4)
+"Hod Realization" : {field} Hod Realization (5)
+"Hod Realization" : {field} Hod Realization (6)
+"Hod Realization" : {field} Hod Realization (7)
+"Hod Realization" : {field} Hod Realization (8)
+class "Hokma Realization" 
+"Hokma Realization" : {field} Hokma Realization (1)
+"Hokma Realization" : {field} Hokma Realization (2)
+"Hokma Realization" : {field} Hokma Realization (3)
+"Hokma Realization" : {field} Hokma Realization (4)
+"Hokma Realization" : {field} Hokma Realization (5)
+"Hokma Realization" : {field} Hokma Realization (6)
+"Hokma Realization" : {field} Hokma Realization (7)
+"Hokma Realization" : {field} Hokma Realization (8)
+"Hokma Realization" : {field} Hokma Realization (9)
+"Hokma Realization" : {field} Hokma Realization (10)
+"Hokma Realization" : {field} Hokma Realization (11)
+class "Chesed Realization" 
+"Chesed Realization" : {field} Chesed Realization (1)
+"Chesed Realization" : {field} Chesed Realization (2)
+"Chesed Realization" : {field} Chesed Realization (3)
+"Chesed Realization" : {field} Chesed Realization (4)
+"Chesed Realization" : {field} Chesed Realization (5)
+"Chesed Realization" : {field} Chesed Realization (6)
+"Chesed Realization" : {field} Chesed Realization (7)
+"Chesed Realization" : {field} Chesed Realization (8)
+class "Urban Legend-class Office" 
+"Urban Legend-class Office" : {field} Urban Legend-class Office (1)
+"Urban Legend-class Office" : {field} Urban Legend-class Office (2)
+"Urban Legend-class Office" : {field} Urban Legend-class Office (3)
+"Urban Legend-class Office" : {field} Urban Legend-class Office (4)
+"Urban Legend-class Office" --> "Grade 8 Fixers"
+"Urban Legend-class Office" --> "Axe Gang"
+class "Zwei Crewmembers" 
+"Zwei Crewmembers" : {field} Zwei Crewmembers (1)
+"Zwei Crewmembers" : {field} Zwei Crewmembers (2)
+"Zwei Crewmembers" : {field} Zwei Crewmembers (3)
+"Zwei Crewmembers" : {field} Zwei Crewmembers (4)
+class "Urban Myth-class Syndicate" 
+"Urban Myth-class Syndicate" : {field} Urban Myth-class Syndicate (1)
+"Urban Myth-class Syndicate" : {field} Urban Myth-class Syndicate (2)
+class "Streetlight Office" 
+"Streetlight Office" : {field} Streetlight Office (1)
+"Streetlight Office" : {field} Streetlight Office (2)
+"Streetlight Office" --> "Zwei Association I"
+class "Pierre's Bistro" 
+"Pierre's Bistro" : {field} Pierre's Bistro (1)
+"Pierre's Bistro" : {field} Pierre's Bistro (2)
+"Pierre's Bistro" --> "Stray Dogs"
+class "Zwei Association II" 
+"Zwei Association II" : {field} Zwei Association II (1)
+"Zwei Association II" : {field} Zwei Association II (2)
+"Zwei Association II" : {field} Zwei Association II (3)
+"Zwei Association II" : {field} Zwei Association II (4)
+"Zwei Association II" : {field} Zwei Association II (5)
+"Zwei Association II" --> "Molar Office"
+class "Grade 8 Fixers" 
+"Grade 8 Fixers" : {field} Grade 8 Fixers (1)
+"Grade 8 Fixers" : {field} Grade 8 Fixers (2)
+"Grade 8 Fixers" : {field} Grade 8 Fixers (3)
+"Grade 8 Fixers" : {field} Grade 8 Fixers (4)
+"Grade 8 Fixers" --> "Dawn Office"
+class "Axe Gang" 
+"Axe Gang" : {field} Axe Gang (1)
+"Axe Gang" : {field} Axe Gang (2)
+"Axe Gang" : {field} Axe Gang (3)
+"Axe Gang" : {field} Axe Gang (4)
+"Axe Gang" --> "Dawn Office"
+"Axe Gang" --> "Rusted Chains"
+"Axe Gang" --> "Workshop-affiliated Fixers"
+class "Zwei Association I" 
+"Zwei Association I" : {field} Zwei Association I (1)
+"Zwei Association I" : {field} Zwei Association I (2)
+"Zwei Association I" : {field} Zwei Association I (3)
+"Zwei Association I" : {field} Zwei Association I (4)
+"Zwei Association I" : {field} Zwei Association I (5)
+class "Stray Dogs" 
+"Stray Dogs" : {field} Stray Dogs (1)
+"Stray Dogs" : {field} Stray Dogs (2)
+"Stray Dogs" : {field} Stray Dogs (3)
+"Stray Dogs" : {field} Stray Dogs (4)
+"Stray Dogs" : {field} Stray Dogs (5)
+"Stray Dogs" : {field} Stray Dogs (6)
+"Stray Dogs" --> "Grade 7 Fixers"
+"Stray Dogs" --> "The Carnival"
+class "Molar Office" 
+"Molar Office" : {field} Molar Office (1)
+"Molar Office" : {field} Molar Office (2)
+"Molar Office" : {field} Molar Office (3)
+"Molar Office" : {field} Molar Office (4)
+"Molar Office" : {field} Molar Office (5)
+"Molar Office" : {field} Molar Office (6)
+"Molar Office" --> "Urban Legend-class Syndicate"
+class "Dawn Office" 
+"Dawn Office" : {field} Dawn Office (1)
+"Dawn Office" : {field} Dawn Office (2)
+"Dawn Office" : {field} Dawn Office (3)
+"Dawn Office" : {field} Dawn Office (4)
+"Dawn Office" : {field} Dawn Office (5)
+"Dawn Office" --> "Gaze Office"
+class "Rusted Chains" 
+"Rusted Chains" : {field} Rusted Chains (1)
+"Rusted Chains" : {field} Rusted Chains (2)
+"Rusted Chains" : {field} Rusted Chains (3)
+"Rusted Chains" : {field} Rusted Chains (4)
+"Rusted Chains" : {field} Rusted Chains (5)
+"Rusted Chains" --> "Tomerry"
+class "Workshop-affiliated Fixers" 
+"Workshop-affiliated Fixers" : {field} Workshop-affiliated Fixers (1)
+"Workshop-affiliated Fixers" : {field} Workshop-affiliated Fixers (2)
+"Workshop-affiliated Fixers" : {field} Workshop-affiliated Fixers (3)
+"Workshop-affiliated Fixers" : {field} Workshop-affiliated Fixers (4)
+"Workshop-affiliated Fixers" : {field} Workshop-affiliated Fixers (5)
+"Workshop-affiliated Fixers" --> "Gaze Office"
+"Workshop-affiliated Fixers" --> "Tomerry"
+"Workshop-affiliated Fixers" --> "Jeong's Office"
+class "Grade 7 Fixers" 
+"Grade 7 Fixers" : {field} Grade 7 Fixers (1)
+"Grade 7 Fixers" : {field} Grade 7 Fixers (2)
+"Grade 7 Fixers" : {field} Grade 7 Fixers (3)
+"Grade 7 Fixers" : {field} Grade 7 Fixers (4)
+"Grade 7 Fixers" --> "Kurokumo Clan"
+class "The Carnival" 
+"The Carnival" : {field} The Carnival (1)
+"The Carnival" : {field} The Carnival (2)
+"The Carnival" : {field} The Carnival (3)
+"The Carnival" : {field} The Carnival (4)
+"The Carnival" : {field} The Carnival (5)
+class "Urban Legend-class Syndicate" 
+"Urban Legend-class Syndicate" : {field} Urban Legend-class Syndicate (1)
+"Urban Legend-class Syndicate" : {field} Urban Legend-class Syndicate (2)
+"Urban Legend-class Syndicate" : {field} Urban Legend-class Syndicate (3)
+"Urban Legend-class Syndicate" : {field} Urban Legend-class Syndicate (4)
+"Urban Legend-class Syndicate" --> "Musicians of Bremen"
+class "Gaze Office" 
+"Gaze Office" : {field} Gaze Office (1)
+"Gaze Office" : {field} Gaze Office (2)
+"Gaze Office" : {field} Gaze Office (3)
+"Gaze Office" : {field} Gaze Office (4)
+"Gaze Office" : {field} Gaze Office (5)
+class "Tomerry" 
+"Tomerry" : {field} Tomerry (1)
+"Tomerry" : {field} Tomerry (2)
+"Tomerry" : {field} Tomerry (3)
+"Tomerry" : {field} Tomerry (4)
+"Tomerry" : {field} Tomerry (5)
+"Tomerry" : {field} Tomerry (6)
+"Tomerry" : {field} Tomerry (7)
+"Tomerry" --> "Full-Stop Office"
+"Tomerry" --> "Wedge Office"
+"Tomerry" --> "WARP Cleanup Crew"
+class "Jeong's Office" 
+"Jeong's Office" : {field} Jeong's Office (1)
+"Jeong's Office" : {field} Jeong's Office (2)
+"Jeong's Office" : {field} Jeong's Office (3)
+"Jeong's Office" : {field} Jeong's Office (4)
+"Jeong's Office" : {field} Jeong's Office (5)
+class "Kurokumo Clan" 
+"Kurokumo Clan" : {field} Kurokumo Clan (1)
+"Kurokumo Clan" : {field} Kurokumo Clan (2)
+"Kurokumo Clan" : {field} Kurokumo Clan (3)
+"Kurokumo Clan" : {field} Kurokumo Clan (4)
+"Kurokumo Clan" : {field} Kurokumo Clan (5)
+"Kurokumo Clan" : {field} Kurokumo Clan (6)
+"Kurokumo Clan" --> "Seven Association"
+class "Musicians of Bremen" 
+"Musicians of Bremen" : {field} Musicians of Bremen (1)
+"Musicians of Bremen" : {field} Musicians of Bremen (2)
+"Musicians of Bremen" : {field} Musicians of Bremen (3)
+"Musicians of Bremen" : {field} Musicians of Bremen (4)
+"Musicians of Bremen" : {field} Musicians of Bremen (5)
+"Musicians of Bremen" : {field} Musicians of Bremen (6)
+class "Full-Stop Office" 
+"Full-Stop Office" : {field} Full-Stop Office (1)
+"Full-Stop Office" : {field} Full-Stop Office (2)
+"Full-Stop Office" : {field} Full-Stop Office (3)
+"Full-Stop Office" : {field} Full-Stop Office (4)
+"Full-Stop Office" : {field} Full-Stop Office (5)
+"Full-Stop Office" --> "Bayard"
+"Full-Stop Office" --> "Smiling Faces"
+class "Wedge Office" 
+"Wedge Office" : {field} Wedge Office (1)
+"Wedge Office" : {field} Wedge Office (2)
+"Wedge Office" : {field} Wedge Office (3)
+"Wedge Office" : {field} Wedge Office (4)
+"Wedge Office" : {field} Wedge Office (5)
+"Wedge Office" : {field} Wedge Office (6)
+class "WARP Cleanup Crew" 
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (1)
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (2)
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (3)
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (4)
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (5)
+"WARP Cleanup Crew" : {field} WARP Cleanup Crew (6)
+"WARP Cleanup Crew" --> "The Crying Children"
+"WARP Cleanup Crew" --> "Sweepers"
+"WARP Cleanup Crew" --> "Blade Lineage"
+class "Seven Association" 
+"Seven Association" : {field} Seven Association (1)
+"Seven Association" : {field} Seven Association (2)
+"Seven Association" : {field} Seven Association (3)
+"Seven Association" : {field} Seven Association (4)
+"Seven Association" : {field} Seven Association (5)
+"Seven Association" --> "The 8 o'Clock Circus"
+"Seven Association" --> "The Crying Children"
+class "Bayard" 
+"Bayard" : {field} Bayard (1)
+"Bayard" : {field} Bayard (2)
+"Bayard" : {field} Bayard (3)
+"Bayard" : {field} Bayard (4)
+"Bayard" : {field} Bayard (5)
+"Bayard" --> "Night Awls"
+"Bayard" --> "Shi Association"
+"Bayard" --> "Index Proselytes"
+class "Smiling Faces" 
+"Smiling Faces" : {field} Smiling Faces (1)
+"Smiling Faces" : {field} Smiling Faces (2)
+"Smiling Faces" : {field} Smiling Faces (3)
+"Smiling Faces" : {field} Smiling Faces (4)
+"Smiling Faces" : {field} Smiling Faces (5)
+"Smiling Faces" : {field} Smiling Faces (6)
+"Smiling Faces" --> "Shi Association"
+class "The Crying Children" 
+"The Crying Children" : {field} The Crying Children (1)
+"The Crying Children" : {field} The Crying Children (2)
+"The Crying Children" : {field} The Crying Children (3)
+"The Crying Children" : {field} The Crying Children (4)
+"The Crying Children" : {field} The Crying Children (5)
+"The Crying Children" : {field} The Crying Children (6)
+"The Crying Children" : {field} The Crying Children (7)
+"The Crying Children" : {field} The Crying Children (8)
+class "Sweepers" 
+"Sweepers" : {field} Sweepers (1)
+"Sweepers" : {field} Sweepers (2)
+"Sweepers" : {field} Sweepers (3)
+"Sweepers" : {field} Sweepers (4)
+"Sweepers" : {field} Sweepers (5)
+"Sweepers" --> "Liu Association Section 2 II"
+class "Blade Lineage" 
+"Blade Lineage" : {field} Blade Lineage (1)
+"Blade Lineage" : {field} Blade Lineage (2)
+"Blade Lineage" : {field} Blade Lineage (3)
+"Blade Lineage" : {field} Blade Lineage (4)
+"Blade Lineage" : {field} Blade Lineage (5)
+class "The 8 o'Clock Circus" 
+"The 8 o'Clock Circus" : {field} The 8 o'Clock Circus (1)
+"The 8 o'Clock Circus" : {field} The 8 o'Clock Circus (2)
+"The 8 o'Clock Circus" : {field} The 8 o'Clock Circus (3)
+"The 8 o'Clock Circus" : {field} The 8 o'Clock Circus (4)
+"The 8 o'Clock Circus" : {field} The 8 o'Clock Circus (5)
+"The 8 o'Clock Circus" --> "Puppets"
+"The 8 o'Clock Circus" --> "Dong-hwan the Grade 1 Fixer"
+class "Night Awls" 
+"Night Awls" : {field} Night Awls (1)
+"Night Awls" : {field} Night Awls (2)
+"Night Awls" : {field} Night Awls (3)
+"Night Awls" : {field} Night Awls (4)
+"Night Awls" : {field} Night Awls (5)
+"Night Awls" --> "Liu Association Section 1"
+class "Shi Association" 
+"Shi Association" : {field} Shi Association (1)
+"Shi Association" : {field} Shi Association (2)
+"Shi Association" : {field} Shi Association (3)
+"Shi Association" : {field} Shi Association (4)
+"Shi Association" : {field} Shi Association (5)
+class "Index Proselytes" 
+"Index Proselytes" : {field} Index Proselytes (1)
+"Index Proselytes" : {field} Index Proselytes (2)
+"Index Proselytes" : {field} Index Proselytes (3)
+"Index Proselytes" : {field} Index Proselytes (4)
+"Index Proselytes" : {field} Index Proselytes (5)
+"Index Proselytes" : {field} Index Proselytes (6)
+"Index Proselytes" --> "Leaflet Workshop"
+"Index Proselytes" --> "The Udjat"
+class "Liu Association Section 2 II" 
+"Liu Association Section 2 II" : {field} Liu Association Section 2 II (1)
+"Liu Association Section 2 II" : {field} Liu Association Section 2 II (2)
+"Liu Association Section 2 II" : {field} Liu Association Section 2 II (3)
+"Liu Association Section 2 II" : {field} Liu Association Section 2 II (4)
+"Liu Association Section 2 II" : {field} Liu Association Section 2 II (5)
+"Liu Association Section 2 II" --> "The Blue Reverberation"
+"Liu Association Section 2 II" --> "Cane Office"
+class "Puppets" 
+"Puppets" : {field} Puppets (1)
+"Puppets" : {field} Puppets (2)
+"Puppets" : {field} Puppets (3)
+"Puppets" : {field} Puppets (4)
+"Puppets" : {field} Puppets (5)
+class "Dong-hwan the Grade 1 Fixer" 
+"Dong-hwan the Grade 1 Fixer" : {field} Dong-hwan the Grade 1 Fixer (1)
+"Dong-hwan the Grade 1 Fixer" : {field} Dong-hwan the Grade 1 Fixer (2)
+"Dong-hwan the Grade 1 Fixer" : {field} Dong-hwan the Grade 1 Fixer (3)
+"Dong-hwan the Grade 1 Fixer" : {field} Dong-hwan the Grade 1 Fixer (4)
+"Dong-hwan the Grade 1 Fixer" : {field} Dong-hwan the Grade 1 Fixer (5)
+"Dong-hwan the Grade 1 Fixer" --> "The Udjat"
+class "Liu Association Section 1" 
+"Liu Association Section 1" : {field} Liu Association Section 1 (1)
+"Liu Association Section 1" : {field} Liu Association Section 1 (2)
+"Liu Association Section 1" : {field} Liu Association Section 1 (3)
+"Liu Association Section 1" : {field} Liu Association Section 1 (4)
+"Liu Association Section 1" : {field} Liu Association Section 1 (5)
+"Liu Association Section 1" : {field} Liu Association Section 1 (6)
+"Liu Association Section 1" --> "얀샋ㄷ요무"
+class "Leaflet Workshop" 
+"Leaflet Workshop" : {field} Leaflet Workshop (1)
+"Leaflet Workshop" : {field} Leaflet Workshop (2)
+"Leaflet Workshop" : {field} Leaflet Workshop (3)
+"Leaflet Workshop" : {field} Leaflet Workshop (4)
+"Leaflet Workshop" : {field} Leaflet Workshop (5)
+"Leaflet Workshop" --> "Liu Association Section 2"
+"Leaflet Workshop" --> "The Thumb"
+class "The Udjat" 
+"The Udjat" : {field} The Udjat (1)
+"The Udjat" : {field} The Udjat (2)
+"The Udjat" : {field} The Udjat (3)
+"The Udjat" : {field} The Udjat (4)
+"The Udjat" : {field} The Udjat (5)
+class "The Blue Reverberation" 
+"The Blue Reverberation" : {field} The Blue Reverberation (1)
+"The Blue Reverberation" : {field} The Blue Reverberation (2)
+"The Blue Reverberation" : {field} The Blue Reverberation (3)
+"The Blue Reverberation" : {field} The Blue Reverberation (4)
+"The Blue Reverberation" : {field} The Blue Reverberation (5)
+class "Cane Office" 
+"Cane Office" : {field} Cane Office (1)
+"Cane Office" : {field} Cane Office (2)
+"Cane Office" : {field} Cane Office (3)
+"Cane Office" : {field} Cane Office (4)
+"Cane Office" : {field} Cane Office (5)
+class "얀샋ㄷ요무" 
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (1)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (2)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (3)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (4)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (5)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (6)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (7)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (8)
+"얀샋ㄷ요무" : {field} 얀샋ㄷ요무 (9)
+"얀샋ㄷ요무" --> "Mirae Life Insurance"
+class "Liu Association Section 2" 
+"Liu Association Section 2" : {field} Liu Association Section 2 (1)
+"Liu Association Section 2" : {field} Liu Association Section 2 (2)
+"Liu Association Section 2" : {field} Liu Association Section 2 (3)
+"Liu Association Section 2" : {field} Liu Association Section 2 (4)
+"Liu Association Section 2" : {field} Liu Association Section 2 (5)
+"Liu Association Section 2" --> "R Corp II"
+"Liu Association Section 2" --> "Xiao"
+class "The Thumb" 
+"The Thumb" : {field} The Thumb (1)
+"The Thumb" : {field} The Thumb (2)
+"The Thumb" : {field} The Thumb (3)
+"The Thumb" : {field} The Thumb (4)
+"The Thumb" : {field} The Thumb (5)
+class "Mirae Life Insurance" 
+"Mirae Life Insurance" : {field} Mirae Life Insurance (1)
+"Mirae Life Insurance" : {field} Mirae Life Insurance (2)
+"Mirae Life Insurance" : {field} Mirae Life Insurance (3)
+"Mirae Life Insurance" : {field} Mirae Life Insurance (4)
+"Mirae Life Insurance" : {field} Mirae Life Insurance (5)
+"Mirae Life Insurance" --> "R Corp"
+"Mirae Life Insurance" --> "Index Proxies"
+class "R Corp II" 
+"R Corp II" : {field} R Corp II (1)
+"R Corp II" : {field} R Corp II (2)
+"R Corp II" : {field} R Corp II (3)
+"R Corp II" : {field} R Corp II (4)
+"R Corp II" : {field} R Corp II (5)
+"R Corp II" : {field} R Corp II (6)
+class "Xiao" 
+"Xiao" : {field} Xiao (1)
+"Xiao" : {field} Xiao (2)
+"Xiao" : {field} Xiao (3)
+"Xiao" : {field} Xiao (4)
+"Xiao" : {field} Xiao (5)
+"Xiao" : {field} Xiao (6)
+"Xiao" : {field} Xiao (7)
+"Xiao" : {field} Xiao (8)
+"Xiao" : {field} Xiao (9)
+"Xiao" --> "The Thumb II"
+class "R Corp" 
+"R Corp" : {field} R Corp (1)
+"R Corp" : {field} R Corp (2)
+"R Corp" : {field} R Corp (3)
+"R Corp" : {field} R Corp (4)
+"R Corp" : {field} R Corp (5)
+"R Corp" : {field} R Corp (6)
+class "Index Proxies" 
+"Index Proxies" : {field} Index Proxies (1)
+"Index Proxies" : {field} Index Proxies (2)
+"Index Proxies" : {field} Index Proxies (3)
+"Index Proxies" : {field} Index Proxies (4)
+"Index Proxies" : {field} Index Proxies (5)
+"Index Proxies" : {field} Index Proxies (6)
+"Index Proxies" --> "The Purple Tear"
+class "The Thumb II" 
+"The Thumb II" : {field} The Thumb II (1)
+"The Thumb II" : {field} The Thumb II (2)
+"The Thumb II" : {field} The Thumb II (3)
+"The Thumb II" : {field} The Thumb II (4)
+"The Thumb II" : {field} The Thumb II (5)
+class "The Purple Tear" 
+"The Purple Tear" : {field} The Purple Tear (1)
+"The Purple Tear" : {field} The Purple Tear (2)
+"The Purple Tear" : {field} The Purple Tear (3)
+"The Purple Tear" : {field} The Purple Tear (4)
+"The Purple Tear" : {field} The Purple Tear (5)
+"The Purple Tear" : {field} The Purple Tear (6)
+"The Purple Tear" : {field} The Purple Tear (7)
+"The Purple Tear" : {field} The Purple Tear (8)
+"The Purple Tear" --> "Oliver"
+class "Oliver" 
+"Oliver" : {method} <&lock-locked> Oliver (1): **The Black Silence's Page**
+"Oliver" : {field} <&lock-unlocked,color=transparent> Oliver (2)
+"Oliver" : {field} <&lock-unlocked,color=transparent> Oliver (3)
+"Oliver" : {field} <&lock-unlocked,color=transparent> Oliver (4)
+"Oliver" : {field} <&lock-unlocked,color=transparent> Oliver (5)
+"Oliver" : {field} <&lock-unlocked,color=transparent> Oliver (6)
+"Oliver" --> "Endgame"
+class "Endgame" 
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Crying Children (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Crying Children (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Crying Children (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Crying Children (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Crying Children (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Church of Gears (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Church of Gears (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Church of Gears (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Church of Gears (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Church of Gears (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Eighth Chef (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Eighth Chef (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Eighth Chef (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Eighth Chef (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Eighth Chef (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Musicians of Bremen (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Musicians of Bremen (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Musicians of Bremen (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Musicians of Bremen (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Musicians of Bremen (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The 8 o'Clock Circus (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The 8 o'Clock Circus (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The 8 o'Clock Circus (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The 8 o'Clock Circus (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The 8 o'Clock Circus (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] L'heure du Loup (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] L'heure du Loup (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] L'heure du Loup (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] L'heure du Loup (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] L'heure du Loup (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Puppeteer (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Puppeteer (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Puppeteer (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Puppeteer (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Puppeteer (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blood-red Night (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blood-red Night (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blood-red Night (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blood-red Night (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blood-red Night (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] Yesterday's Promise (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] Yesterday's Promise (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] Yesterday's Promise (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] Yesterday's Promise (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] Yesterday's Promise (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blue Reverberation (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blue Reverberation (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blue Reverberation (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blue Reverberation (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --[Ensemble] The Blue Reverberation (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (6)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (7)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (8)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (9)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Black Silence (10)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (1)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (2)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (3)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (4)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (5)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (6)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (7)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (8)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (9)--
+"Endgame" : {field} <&lock-unlocked,color=transparent> --The Reverberation Ensemble Distorted (10)--
+"Endgame" : {method} <&lock-locked> //Game Completed//: //**One Perfect Book Achieved**//
+@enduml

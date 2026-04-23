@@ -59,7 +59,7 @@ class BookItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Book"
     copies: int = 0
-    type = ItemClassification.progression
+    type = ItemClassification.useful
 
 @dataclass
 class OtherItem(LORItemData):
@@ -72,16 +72,16 @@ class OtherItem(LORItemData):
 
 item_list: list[LORItemData] = [
     # Floor Unlocks. Total - 10. Up to 9 per run.
-    FloorUnlockItem(id=1, name="Floor of History"),
-    FloorUnlockItem(id=2, name="Floor of Technological Sciences"),
-    FloorUnlockItem(id=3, name="Floor of Literature"),
-    FloorUnlockItem(id=4, name="Floor of Art"),
-    FloorUnlockItem(id=5, name="Floor of Natural Sciences"),
-    FloorUnlockItem(id=6, name="Floor of Language"),
-    FloorUnlockItem(id=7, name="Floor of Social Sciences"),
-    FloorUnlockItem(id=8, name="Floor of Philosophy"),
-    FloorUnlockItem(id=9, name="Floor of Religion"),
-    FloorUnlockItem(id=10, name="Floor of General Works"),
+    FloorUnlockItem(id=1, name="Malkuth Floor"),
+    FloorUnlockItem(id=2, name="Yesod Floor"),
+    FloorUnlockItem(id=3, name="Hod Floor"),
+    FloorUnlockItem(id=4, name="Netzach Floor"),
+    FloorUnlockItem(id=5, name="Tiphereth Floor"),
+    FloorUnlockItem(id=6, name="Gebura Floor"),
+    FloorUnlockItem(id=7, name="Chesed Floor"),
+    FloorUnlockItem(id=8, name="Binah Floor"),
+    FloorUnlockItem(id=9, name="Hokma Floor"),
+    FloorUnlockItem(id=10, name="Keter Floor"),
 
     # Floor Abno Pages. Total - 50. 5 per Floor.
     AbnoPagesItem(id=1, name="Malkuth Abnormality Pages"),
