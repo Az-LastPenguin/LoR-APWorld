@@ -15,7 +15,6 @@ def box_muller_constraint(random: random.Random, f: int, t: int):
         x, y = box_muller(random)
         x = .42 * diff / 2 * x + mean
         y = .42 * diff / 2 * y + mean
-        print(f"RNG ATTEMPT {f} {t}; {x} {y}")
         if f <= x and x <= t:
             return x
         if f <= y and y <= t:

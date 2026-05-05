@@ -16,21 +16,21 @@ class ReceptionNode:
 
 reception_nodes: list[ReceptionNode] = [
     # Canard
-    ReceptionNode(id=2, name="Rats", checks=2, next=[3], chapter = 1),
-    ReceptionNode(id=3, name="Yun's Office Fixers", checks=2, next=[4], chapter = 1),
-    ReceptionNode(id=4, name="Yun's Office Rookie", checks=2, next=[5], chapter = 1),
+    ReceptionNode(id=2, name="Rats", checks=3, next=[3], chapter = 1),
+    ReceptionNode(id=3, name="Yun's Office Fixers", checks=3, next=[4], chapter = 1),
+    ReceptionNode(id=4, name="Yun's Office Rookie", checks=3, next=[5], chapter = 1),
     ReceptionNode(id=5, name="Yun's Office", checks=3, next=[6], chapter = 1),
     ReceptionNode(id=6, name="Brotherhood of Iron", checks=5, next=[7], chapter = 1),
     ReceptionNode(id=7, name="Hook Office", checks=5, next=[10001, 100001, 100002, 100003], chapter = 1),
 
     # Urban Myth
-    ReceptionNode(id=10001, name="Pierre's Bistro", checks=2, next=[10002], chapter = 2),
-    ReceptionNode(id=10002, name="Streetlight Office", checks=2, next=[10003], chapter = 2),
-    ReceptionNode(id=10003, name="Lulu of Streetlight", checks=2, next=[20001, 100004, 100005, 100006, 100007, 100008], chapter = 2),
+    ReceptionNode(id=10001, name="Pierre's Bistro", checks=3, next=[10002], chapter = 2),
+    ReceptionNode(id=10002, name="Streetlight Office", checks=3, next=[10003], chapter = 2),
+    ReceptionNode(id=10003, name="Lulu of Streetlight", checks=3, next=[20001, 100004, 100005, 100006, 100007, 100008], chapter = 2),
 
-    ReceptionNode(id=100001, name="Backstreets Butchers", checks=2, next=[], chapter = 2),
-    ReceptionNode(id=100002, name="Hook Office Remnants", checks=2, next=[], chapter = 2),
-    ReceptionNode(id=100003, name="Urban Myth-class Syndicate", checks=2, next=[], chapter = 2),
+    ReceptionNode(id=100001, name="Backstreets Butchers", checks=3, next=[], chapter = 2),
+    ReceptionNode(id=100002, name="Hook Office Remnants", checks=3, next=[], chapter = 2),
+    ReceptionNode(id=100003, name="Urban Myth-class Syndicate", checks=3, next=[], chapter = 2),
 
     # Urban Legend
     ReceptionNode(id=20001, name="Zwei Crewmembers", checks=4, next=[20002], chapter = 3),

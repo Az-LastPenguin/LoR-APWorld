@@ -26,24 +26,24 @@ class FloorUnlockItem(LORItemData):
     id: int
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "FloorUnlock"
-    copies = 1
-    type = ItemClassification.progression
+    copies: int = 1
+    type: ItemClassification = ItemClassification.progression
 
 @dataclass
 class AbnoPagesItem(LORItemData):
     id: int
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "AbnoPages"
-    copies = 5
-    type = ItemClassification.useful
+    copies: int = 5
+    type: ItemClassification = ItemClassification.useful
 
 @dataclass
 class EgoPageItem(LORItemData):
     id: int
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "EgoPage"
-    copies = 5
-    type = ItemClassification.useful
+    copies: int = 5
+    type: ItemClassification = ItemClassification.useful
 
 @dataclass
 class LibrarianItem(LORItemData):
@@ -51,7 +51,7 @@ class LibrarianItem(LORItemData):
     name: str
     copies: int
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Librarian"
-    type = ItemClassification.useful
+    type: ItemClassification = ItemClassification.progression
 
 @dataclass
 class BookItem(LORItemData):
@@ -59,7 +59,7 @@ class BookItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Book"
     copies: int = 0
-    type = ItemClassification.useful
+    type: ItemClassification = ItemClassification.filler
 
 @dataclass
 class OtherItem(LORItemData):
@@ -67,7 +67,7 @@ class OtherItem(LORItemData):
     name: str
     type_id: Literal["FloorUnlock", "AbnoPages", "EgoPage", "Librarian", "Book", "Other"] = "Other"
     copies: int = 0
-    type = ItemClassification.useful
+    type: ItemClassification = ItemClassification.useful
 
 
 item_list: list[LORItemData] = [
@@ -130,7 +130,7 @@ item_list: list[LORItemData] = [
     OtherItem(id=1, name="Passive Limits Break"), # Depends on an option
     OtherItem(id=2, name="Emotion Limits Break"), # Depends on an option
 
-    OtherItem(id=3, name="Binah", copies=1), # Fixed amount
+    OtherItem(id=3, name="Binah", copies=1, type=ItemClassification.progression), # Fixed amount
     OtherItem(id=4, name="The Black Silence's Page", copies=1), # Fixed amount
     OtherItem(id=5, name="Combat Page Exclusiveness Removal"), # Depends on an option
 ]
