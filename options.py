@@ -149,16 +149,16 @@ class PageRandomization(Choice):
 
 
 ### PROGRESSION ###
-class RandomizeReceptionTree(Toggle):
-    """
-    If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
-    unique for each Seed. 
-    
-    First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
-    """
-
-    display_name = "Randomize Reception Tree"
-    default = True
+# class RandomizeReceptionTree(Toggle):
+#     """
+#     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
+#     unique for each Seed.
+#
+#     First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
+#     """
+#
+#     display_name = "Randomize Reception Tree"
+#     default = True
 
 #class ReceptionsRequirePrevious(Toggle): # NOTE: Honestly idk, makes my life easier without it.
 #    """
@@ -357,6 +357,15 @@ class FillerItems(Choice):
     option_boosterpacks = 1
     default = 0
 
+
+class ChaoticBookProgression(Toggle):
+    """
+    If true, books will drop random rewards and receptions will require books from random chapters.
+    Otherwise, books will drop pages from their chapter and receptions will require books from their chapter.
+    """
+    display_name = "Chaotic Book Progression"
+    default = False
+
 class FillerPages(Range):
     """
     !!!NOT IMPLEMENTED!!! TODO
@@ -424,7 +433,7 @@ class LOROptions(PerGameCommonOptions):
     ego_page_shuffle: EGOPageShuffle
     page_randomization: PageRandomization
     # Progression
-    randomize_reception_tree: RandomizeReceptionTree
+    # randomize_reception_tree: RandomizeReceptionTree
     # receptions_require_previous: ReceptionsRequirePrevious
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
@@ -433,6 +442,7 @@ class LOROptions(PerGameCommonOptions):
     randomize_black_silence_page: RandomizeBlackSilencePage
     balance_book_contents: BalanceBookContents
     enemies_turn_into_checks: EnemiesTurnIntoChecks
+    chaotic_book_progression: ChaoticBookProgression
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems
