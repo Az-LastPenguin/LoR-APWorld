@@ -86,7 +86,7 @@ reception_nodes: list[ReceptionNode] = [
     ReceptionNode(id=50011, name="R Corp. II", checks=6, next=[60001], chapter = 6),
     ReceptionNode(id=50012, name="The Purple Tear", checks=8, next=[60001], chapter = 6),
     ReceptionNode(id=50013, name="Xiao", checks=9, next=[60001], chapter = 6),
-    ReceptionNode(id=50014, name="얀샋ㄷ요무", checks=9, next=[60001], chapter = 6),
+    ReceptionNode(id=50014, name="Distorted Yan", checks=9, next=[60001], chapter = 6),
 
     ReceptionNode(id=100013, name="Dong-hwan the Grade 1 Fixer", checks=5, next=[], chapter = 6),
     ReceptionNode(id=100015, name="Night Awls", checks=5, next=[], chapter = 6),

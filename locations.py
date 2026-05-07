@@ -474,7 +474,7 @@ def assign_archipelago_book_requirements(
 
     require_receptions = _option_enabled(options, "receptions_require_books")
     require_floors = _option_enabled(options, "floors_require_books")
-    chaotic_books = _option_enabled(options, "chaotic_book_progression") if hasattr(options, "chaotic_book_progression") else False
+    balance_books = _option_enabled(options, "balance_book_requirements") if hasattr(options, "balance_book_requirements") else False
 
     used_books: set[int] = set()
     max_index = max(1, len(progression_nodes) - 1)
@@ -509,7 +509,7 @@ def assign_archipelago_book_requirements(
         return min(3, count)
 
     def candidate_books_for_node(node: ProgressionNode, already_selected: set[int]) -> list[BookInfo]:
-        if chaotic_books:
+        if not balance_books:
             return [book for book in books if book.id not in already_selected]
 
         drift = 2 if progress_fraction(node) > 0.65 and rng.random() < 0.25 else 1

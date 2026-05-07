@@ -267,9 +267,9 @@ class LORWorld(World):
             "shuffle_realizations",
             "floors_require_books",
             "randomize_black_silence_page",
-            "balance_book_contents",
+            "book_contents_randomization",
             "enemies_turn_into_checks",
-            "chaotic_book_progression",
+            "balance_book_requirements",
         )
         slot_data["randomize_reception_tree"] = 1
 

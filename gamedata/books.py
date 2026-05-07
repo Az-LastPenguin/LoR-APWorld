@@ -151,7 +151,7 @@ books: list[BookInfo] = [
     BookInfo(id=250034, name="Book of the Purple Tear"),
     BookInfo(id=250035, name="Book of Xiao"),
     BookInfo(id=250036, name="Book of Miris"),
-    BookInfo(id=250037, name="Book of 얀샋ㄷ요무"),
+    BookInfo(id=250037, name="Book of Distorted Yan"),
 
     BookInfo(id=252001, name="Book of Allen"),
     BookInfo(id=252002, name="Book of a Night Awl"),

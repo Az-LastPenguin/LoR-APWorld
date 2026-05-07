@@ -147,61 +147,40 @@ class PageRandomization(Choice):
     option_havoc = 3
     default = 0 
 
-
-### PROGRESSION ###
-# class RandomizeReceptionTree(Toggle):
-#     """
-#     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
-#     unique for each Seed.
-#
-#     First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
-#     """
-#
-#     display_name = "Randomize Reception Tree"
-#     default = True
-
-#class ReceptionsRequirePrevious(Toggle): # NOTE: Honestly idk, makes my life easier without it.
-#    """
-#    If 'true', to access a reception you have to complete atleast one of it's previous receptions.
-#    """
-#
-#    display_name = "Receptions Require Previous"
-#    default = True
-
-class ReceptionsRequireBooks(Toggle):
+class RandomizeBlackSilencePage(Toggle):
     """
-    If 'true', every reception will require books to send invitation.
-    
-    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
+    If 'true', Black Silence Page item's location will be random.
+    If 'false', Black Silence Page will be unlocked after completing Reception of Oliver
     """
 
-    display_name = "Receptions Require Books"
+    display_name = "Randomize Black Silence Page Location"
     default = True
 
-#class ReceptionsProgression(Choice):
-#    """
-#    Select the way receptions progress in the game.
-#
-#    Unlocked - Every reception is unlocked from the start. Endgoals are also unlocked.
-#    Progressive - Every reception is locked except one at the start. To unlock next receptions you have to complete one of the previous ones. Completing last
-#                  reception in the reception tree unlocks access to the endgoals.
-#    Books - Every reception requires books to send invitation. Endgoals are unlocked. !!!BE AWARE that this setting follows NO logical progression, and you might as well just get Xiao after Rats!!!
-#    ProgressiveBooks - Every reception is locked except one at the start. To unlock a reception you have to complete one of the previous ones and send required books in the invitation.
-#                       Required books are randomized. Endgoal access is same as 'Paths' option.
-#
-#    Receptions in Unlocked & Books are represented not in a tree form in-game.
-#    """
-#
-#    display_name = "Receptions Progression"
-#    option_unlocked = 0
-#    option_progressive = 1
-#    option_books = 2
-#    option_progressivebooks = 3
-#    default = 3
+class BookContentsRandomization(Choice):
+    """
+    Select the way every vanilla book's contents will be randomized.
+
+    BookChapter - Book contents will be balanced around the chapter of the book.
+    StageChapter - Book contents will be balanced around the chapter of the reception/suppression/realization they're required in.
+    Chaotic - Book contents are fully random.
+    """
+    display_name = "Book Contents Randomization"
+    option_bookchapter = 0
+    option_stagechapter = 1
+    option_chaotic = 2
+    default = 0
+
+class BalanceBookRequirements(Toggle):
+    """
+    If true, receptions/suppressions/realizations will require books from around their chapters.
+    Otherwise, random books will be selected.
+    """
+    display_name = "Balance Book Requirements"
+    default = True
 
 class ShuffleAbnos(Toggle):
     """
-    If 'true', Abnormalities will be shuffled between the floors
+    If 'true', Abnormalities will be shuffled between the floors.
     """
 
     display_name = "Shuffle Abnormalities"
@@ -215,6 +194,28 @@ class ShuffleRealizations(Toggle):
     display_name = "Shuffle Realizations"
     default = True
 
+### PROGRESSION ###
+# class RandomizeReceptionTree(Toggle): # TODO: Allow non-randomzied reception tree w/ Yar's logic
+#     """
+#     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
+#     unique for each Seed.
+#
+#     First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
+#     """
+#
+#     display_name = "Randomize Reception Tree"
+#     default = True
+
+class ReceptionsRequireBooks(Toggle):
+    """
+    If 'true', every reception will require books to send invitation.
+    
+    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
+    """
+
+    display_name = "Receptions Require Books"
+    default = True
+
 class FloorsRequireBooks(Toggle):
     """
     If 'true', Abnormality Suppressions and Realizations will require books.
@@ -223,25 +224,6 @@ class FloorsRequireBooks(Toggle):
     """
     
     display_name = "Floors Require Books"
-    default = True
-
-class RandomizeBlackSilencePage(Toggle):
-    """
-    If 'true', Black Silence Page item's location will be random.
-    If 'false', Black Silence Page will be unlocked after completing Reception of Oliver
-    """
-
-    display_name = "Randomize Black Silence Page Location"
-    default = True
-
-class BalanceBookContents(Toggle):
-    """
-    If 'true', Every vanilla book's Combat and Key Pages will be balanced around the chapter of the stage they're required in
-    or chapter of the highest chapter stage available.
-    
-    This setting will default drops to chapter of the book in vanilla game if it's not required in floor/reception.
-    """
-    display_name = "Balance Book Contents"
     default = True
 
 class EnemiesTurnIntoChecks(Toggle):
@@ -333,7 +315,7 @@ class ExclusivenessRemove(Choice):
     """
     Select if "Combat Page Exclusiveness Removal" item should be added to the pool.
 
-    I think option names are self explainatory?
+    I think option names are self explanatory?
     """
     display_name = "Combat Page Exclusiveness Remova"
     option_dontadd = 0
@@ -345,26 +327,19 @@ class FillerItems(Choice):
     """
     Select which filler items are going to be in the pool.
 
+    NOTE: Book of Everything doesn't work yet.
+
     Book of Everything - It's drops adapt to your current progress, giving you pages around your current level.
                          Page rarity has small impact on item weights (Every rarity can drop almost with the same chance).
                          Allows for a more balanced playthrough. Amount of each page dropped is random.
     Booster Packs - Can give you any page in the game no matter when you burn them, but every page is dropped as a single copy,
                     and page weight decreases with rarity drastically (Higher rarity will drop a lot less).
-                    Makes playthouugh a less balanced, and maybe more fun. If you win in the gacha.
+                    Makes playthough a less balanced, and maybe more fun. If you win in the gacha.
     """
     display_name = "Filler Items"
     option_bookofeverything = 0
     option_boosterpacks = 1
-    default = 0
-
-
-class ChaoticBookProgression(Toggle):
-    """
-    If true, books will drop random rewards and receptions will require books from random chapters.
-    Otherwise, books will drop pages from their chapter and receptions will require books from their chapter.
-    """
-    display_name = "Chaotic Book Progression"
-    default = False
+    default = 1
 
 class FillerPages(Range):
     """
@@ -432,17 +407,16 @@ class LOROptions(PerGameCommonOptions):
     exodia_guaratnee: ExodiaGuarantee
     ego_page_shuffle: EGOPageShuffle
     page_randomization: PageRandomization
+    randomize_black_silence_page: RandomizeBlackSilencePage
+    book_contents_randomization: BookContentsRandomization
+    balance_book_requirements: BalanceBookRequirements
     # Progression
     # randomize_reception_tree: RandomizeReceptionTree
-    # receptions_require_previous: ReceptionsRequirePrevious
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations
     floors_require_books: FloorsRequireBooks
-    randomize_black_silence_page: RandomizeBlackSilencePage
-    balance_book_contents: BalanceBookContents
     enemies_turn_into_checks: EnemiesTurnIntoChecks
-    chaotic_book_progression: ChaoticBookProgression
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems
