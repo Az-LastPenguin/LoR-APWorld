@@ -8,7 +8,7 @@ from .items import LORItem, LORItemData, items_by_id, items_by_name, items_by_ca
 from .locations import LORLocation, LORSetupResult, ProgressionNode, setup_locations, locations_name_to_id
 from .gamedata.receptions import endgoal_receptions
 from .gamedata.floors import Floor
-from .gamedata.books import books_dict
+from .gamedata.books import books_dict, books_by_name
 from worlds.AutoWorld import World
 from worlds.generic.Rules import set_rule
 from BaseClasses import Item, ItemClassification, Region, LocationProgressType
@@ -143,6 +143,8 @@ class LORWorld(World):
 
                 if pnode.id == self.reception_tree.first_reception and pnode.kind == "reception":
                     location.progress_type = LocationProgressType.PRIORITY
+                    if options.BalanceBookRequirements.value:
+                        location.item_rule = lambda item: not item.name in books_by_name or books_by_name[item.name].chapter < 6
 
             self.multiworld.regions.append(region)
 

@@ -143,7 +143,7 @@ vanilla_floors: list[Floor] = [
         abno_stages=[
             FloorStage(id=210001, name="Bloodbath", checks=3, chapter=1),
             FloorStage(id=210002, name="Heart of Aspiration", checks=3, chapter=3),
-            FloorStage(id=210003, name="Pinocchio", checks=3, chapter=5),
+            FloorStage(id=210003, name="Pinocchio", checks=3, chapter=5), # TODO: Add librarian req
             FloorStage(id=210004, name="The Snow Queen", checks=3, chapter=6),
         ],
         realization_stage=FloorStage(id=210009, name="Keter Realization", checks=8, chapter=7),
