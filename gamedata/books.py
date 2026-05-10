@@ -36,7 +36,7 @@ books: list[BookInfo] = [
     BookInfo(id=210004, name="Book of Lulu", chapter=2),
     BookInfo(id=210005, name="A Guide to District 23", chapter=2),
     BookInfo(id=210006, name="Dark Alleys of the Backstreets, Vol. I", chapter=2),
-    BookInfo(id=210007, name="A Backstreets Fixer, Vol. II", chapter=2, chapter=2),
+    BookInfo(id=210007, name="A Backstreets Fixer, Vol. II", chapter=2,),
     BookInfo(id=210008, name="A Backstreets Fixer, Vol. I", chapter=2),
     BookInfo(id=210009, name="Book of Streetlight Office", chapter=2),
 

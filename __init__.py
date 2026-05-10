@@ -143,7 +143,7 @@ class LORWorld(World):
 
                 if pnode.id == self.reception_tree.first_reception and pnode.kind == "reception":
                     location.progress_type = LocationProgressType.PRIORITY
-                    if options.BalanceBookRequirements.value:
+                    if self.options.balance_book_requirements.value:
                         location.item_rule = lambda item: not item.name in books_by_name or books_by_name[item.name].chapter < 6
 
             self.multiworld.regions.append(region)

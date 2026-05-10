@@ -117,7 +117,7 @@ vanilla_floors: list[Floor] = [
         id=8,
         seph="Binah",
         abno_stages=[
-            FloorStage(id=208001, name="Big Bird", checks=3, req_librarians=2, chapter=6, req_librarians=3),
+            FloorStage(id=208001, name="Big Bird", checks=3, chapter=6, req_librarians=3),
             FloorStage(id=208002, name="Punishing Bird", checks=3, chapter=6, req_librarians=3),
             FloorStage(id=208003, name="Judgement Bird", checks=3, chapter=7, req_librarians=4),
         ],
