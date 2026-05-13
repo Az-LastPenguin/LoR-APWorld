@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from Options import OptionSet, Range, Choice, PerGameCommonOptions, Toggle
+from Options import OptionSet, Range, Choice, PerGameCommonOptions, Toggle, FreeText
 
 # TODO: Add difficulty presets that will automatically configure the YAML to the difficulty the player wants.
 # For example: Easy difficulty would set Traps Impact Level to Weak, set Guarantee Exodia Abnormality Sets to True and increase total of Passive and Emotion related items.
@@ -65,16 +65,6 @@ class EnsembleBattles(Range):
 
 
 ### RANDOMIZATION ###
-class RandomizationSeed(Range):
-    """
-    Select Randomization Seed which will be used for randomizing different aspects of the Run.
-    Keep it at -1 if you want the Seed to be random.
-    """
-    display_name = "Randomization Seed"
-    range_start = -1
-    range_end = 2147483647
-    default = -1
-
 class AbnoPageShuffle(Choice):
     """
     Select the way Abnormality Pages are shuffled.
@@ -193,6 +183,31 @@ class ShuffleRealizations(Toggle):
 
     display_name = "Shuffle Realizations"
     default = True
+
+
+
+class CustomLORAPSeed(FreeText):
+    """
+    Optional custom seed for LORAP-specific generation.
+
+    Leave empty to use Archipelago's normal per-slot random seed.
+    If set, the same value with the same options will reproduce the same LORAP battle tree, book requirements, floor shuffle and client-side RNG seed.
+    """
+
+    display_name = "Custom LORAP Seed"
+    default = ""
+
+class TreeShape(Choice):
+    """
+    Select the structure of the randomized battle tree.
+
+    Linear - one main route from Rats to Oliver with optional dead-end branches.
+    Branchy - several forward routes from Rats toward Oliver with many reconnecting branches.
+    """
+    display_name = "Battle Tree Shape"
+    option_linear = 0
+    option_branchy = 1
+    default = 1
 
 ### PROGRESSION ###
 # class RandomizeReceptionTree(Toggle): # TODO: Allow non-randomzied reception tree w/ Yar's logic
@@ -401,7 +416,6 @@ class LOROptions(PerGameCommonOptions):
     endgoals: Endgoals
     ensemble_battles: EnsembleBattles
     # Randomization
-    random_seed: RandomizationSeed
     abno_page_shuffle: AbnoPageShuffle
     abno_page_randomization: AbnoPageRandomization
     exodia_guaratnee: ExodiaGuarantee
@@ -410,8 +424,10 @@ class LOROptions(PerGameCommonOptions):
     randomize_black_silence_page: RandomizeBlackSilencePage
     book_contents_randomization: BookContentsRandomization
     balance_book_requirements: BalanceBookRequirements
+    custom_lorap_seed: CustomLORAPSeed
     # Progression
     # randomize_reception_tree: RandomizeReceptionTree
+    tree_shape: TreeShape
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations

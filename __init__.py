@@ -1,17 +1,24 @@
 import typing
-import time
 import logging
+import hashlib
+import random
 
 from . import logic
 from .options import LOROptions
-from .items import LORItem, LORItemData, items_by_id, items_by_name, items_by_category, items_name_to_id
+from .items import LORItem, LORItemData, items_by_name, items_by_category, items_name_to_id
 from .locations import LORLocation, LORSetupResult, ProgressionNode, setup_locations, locations_name_to_id
 from .gamedata.receptions import endgoal_receptions
 from .gamedata.floors import Floor
-from .gamedata.books import books_dict, books_by_name
+from .gamedata.books import books_dict, books
 from worlds.AutoWorld import World
 from worlds.generic.Rules import set_rule
-from BaseClasses import Item, ItemClassification, Region, LocationProgressType
+from BaseClasses import ItemClassification, Region, LocationProgressType
+
+
+def _stable_seed_int(*parts: object) -> int:
+    text = "|".join(str(part) for part in parts)
+    digest = hashlib.sha256(text.encode("utf-8")).digest()
+    return int.from_bytes(digest[:8], "big")
 
 
 class LORWorld(World):
@@ -26,13 +33,31 @@ class LORWorld(World):
 
     setup_result: LORSetupResult = None
     floors: list[Floor] = []
+    client_seed: int = 0
+    effective_lorap_seed: str = ""
+    lorap_random: random.Random = None
 
     logger = logging.getLogger()
+
+
+    def _custom_lorap_seed_value(self) -> str:
+        option = getattr(self.options, "custom_lorap_seed", "")
+        value = getattr(option, "value", option)
+        if value is None:
+            return ""
+        return str(value).strip()
+
+    def _create_lorap_random(self) -> random.Random:
+        custom_seed = self._custom_lorap_seed_value()
+        if custom_seed:
+            self.effective_lorap_seed = custom_seed
+        else:
+            self.effective_lorap_seed = str(self.random.getrandbits(64))
+        return random.Random(_stable_seed_int("LORAP", self.effective_lorap_seed))
 
     def _option_enabled(self, option_name: str) -> bool:
         option = getattr(self.options, option_name)
         return bool(getattr(option, "value", option))
-
 
     @property
     def reception_tree(self):
@@ -51,10 +76,10 @@ class LORWorld(World):
         selected_nodes = []
 
         for node in endgoal_receptions:
-            if node.id >= 70001 and node.id <= 70010:
+            if 70001 <= node.id <= 70010:
                 if "Reverberation Ensemble" in selected_goals:
                     ensemble_limit = int(self.options.ensemble_battles.value)
-                    if len([n for n in selected_nodes if n.id >= 70001 and n.id <= 70010]) < ensemble_limit:
+                    if len([n for n in selected_nodes if 70001 <= n.id <= 70010]) < ensemble_limit:
                         selected_nodes.append(node)
                 continue
 
@@ -67,168 +92,224 @@ class LORWorld(World):
 
         return selected_nodes
 
-    def generate_early(self) -> None:
-        # Set Randomization Seed
-        if self.options.random_seed.value < 0:
-            self.options.random_seed.value = int(time.time())
+    def _initialize_item_state(self) -> None:
+        self.item_copies: dict[str, int] = {name: data.copies for name, data in items_by_name.items()}
+        self.item_classifications: dict[str, ItemClassification] = {name: data.type for name, data in items_by_name.items()}
 
-        self.random.seed(self.options.random_seed.value)
+        for book in books:
+            self.item_copies[book.name] = 0
+            self.item_classifications[book.name] = ItemClassification.filler
 
-        self.setup_result = setup_locations(self.random, self.options)
-        self.floors = self.setup_result.floors
+        self.item_copies["Book of Everything"] = 0
+        self.item_classifications["Book of Everything"] = ItemClassification.filler
+        self.item_copies["Booster Pack"] = 0
+        self.item_classifications["Booster Pack"] = ItemClassification.filler
 
-        # Precollect unlocked floors
-        if self.options.lock_floors.value:
-            floor = items_by_category["FloorUnlock"][
-                self.random.randint(0, 9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value
-            ].name
-            self.multiworld.push_precollected(self.create_item(floor))
-            items_by_name[floor].copies = 0
-            self.logger.info(floor)
+        for book_id in self.setup_result.used_book_requirements:
+            book_name = books_dict[book_id].name
+            self.item_copies[book_name] = 1
+            self.item_classifications[book_name] = ItemClassification.progression
+
+        self.item_copies["Passive Attribution Points"] = int(self.options.passive_points_items.value)
+        self.item_copies["Passive Limits Break"] = int(self.options.passive_limits_items.value)
+        self.item_copies["Emotion Limits Break"] = int(self.options.emotion_limits_items.value)
+
+        if self.options.randomize_black_silence_page.value:
+            self.item_copies["The Black Silence's Page"] = 1
+            self.item_classifications["The Black Silence's Page"] = ItemClassification.progression
         else:
-            for fi in items_by_category["FloorUnlock"]:
-                self.multiworld.push_precollected(self.create_item(fi.name))
-                items_by_name[fi.name].copies = 0
+            self.item_copies["The Black Silence's Page"] = 0
 
-        # Set amount of other items
-        for i in items_by_name.values():
-            if i.name == "Passive Attribution Points":
-                i.copies = self.options.passive_points_items.value
+        if self.options.remove_exclusive.value == 1:
+            self.item_copies["Combat Page Exclusiveness Removal"] = 1
+        else:
+            self.item_copies["Combat Page Exclusiveness Removal"] = 0
 
-            if i.name == "Passive Limits Break":
-                i.copies = self.options.passive_limits_items.value
+    def _precollect_starting_items(self) -> None:
+        if self.options.lock_floors.value:
+            rng = self.lorap_random or self.random
+            floor_index = rng.randint(0, 9) if self.options.starting_floor.value >= 10 else self.options.starting_floor.value
+            floor_name = items_by_category["FloorUnlock"][floor_index].name
+            self.multiworld.push_precollected(self.create_item(floor_name))
+            self.item_copies[floor_name] = 0
+            self.logger.info(floor_name)
+        else:
+            for floor in items_by_category["FloorUnlock"]:
+                self.multiworld.push_precollected(self.create_item(floor.name))
+                self.item_copies[floor.name] = 0
 
-            if i.name == "Emotion Limits Break":
-                i.copies = self.options.emotion_limits_items.value
-
-        # Precollect "Passive Attribution Points" items
         for _ in range(self.options.starting_passive_points_items.value):
             self.multiworld.push_precollected(self.create_item("Passive Attribution Points"))
 
-        # Precollect "Passive Limits Break" items
         for _ in range(self.options.starting_passive_limits_items.value):
             self.multiworld.push_precollected(self.create_item("Passive Limits Break"))
 
-        # Precollect "Emotion Limits Break" items
         for _ in range(self.options.starting_emotion_limits_items.value):
             self.multiworld.push_precollected(self.create_item("Emotion Limits Break"))
 
-        # Precollect or add to the pool the "Combat Page Exclusiveness Remove" item
-        if self.options.remove_exclusive.value == 1:
-            items_by_name["Combat Page Exclusiveness Removal"].copies = 1
-        else:
+        if self.options.remove_exclusive.value != 1:
             self.multiworld.push_precollected(self.create_item("Combat Page Exclusiveness Removal"))
-            items_by_name["Combat Page Exclusiveness Removal"].copies = 0
 
-        if self.options.randomize_black_silence_page.value:
-            items_by_name["The Black Silence's Page"].copies = 1
-            items_by_name["The Black Silence's Page"].type = ItemClassification.progression
-        else:
-            items_by_name["The Black Silence's Page"].copies = 0
+    def generate_early(self) -> None:
+        self.lorap_random = self._create_lorap_random()
+        self.client_seed = self.lorap_random.randrange(1, 2 ** 31)
+        self.setup_result = setup_locations(self.lorap_random, self.options)
+        self.floors = self.setup_result.floors
+        self._initialize_item_state()
+        self._precollect_starting_items()
 
     def create_regions(self) -> None:
+        self.node_regions: dict[str, Region] = {}
+        self.node_entrances: dict[str, list[object]] = {}
+        self.edge_entrances: list[tuple[str, str, object]] = []
+        self.node_clear_events: dict[str, str] = {}
+        self.goal_event_items: list[str] = []
+
         menu = Region("Menu", self.player, self.multiworld)
         self.multiworld.regions.append(menu)
 
         nodes_by_key = {node.key: node for node in self.progression_nodes}
 
-        for pnode in self.progression_nodes:
-            region = Region(pnode.name, self.player, self.multiworld)
+        for node in self.progression_nodes:
+            region = Region(node.name, self.player, self.multiworld)
+            self.node_regions[node.key] = region
 
-            for i in range(pnode.source.checks):
-                location_name = f"{pnode.name} ({i + 1})"
+            for index in range(node.source.checks):
+                location_name = f"{node.name} ({index + 1})"
                 location = LORLocation(self.player, location_name, locations_name_to_id[location_name], region)
-                set_rule(location, self._make_location_access_rule(pnode))
+                if node.id == self.reception_tree.first_reception and node.kind == "reception":
+                    location.progress_type = LocationProgressType.PRIORITY
                 region.locations.append(location)
 
-                if pnode.id == self.reception_tree.first_reception and pnode.kind == "reception":
-                    location.progress_type = LocationProgressType.PRIORITY
-                    if self.options.balance_book_requirements.value:
-                        location.item_rule = lambda item: not item.name in books_by_name or books_by_name[item.name].chapter < 6
+            clear_event = f"{node.name} Cleared"
+            clear_location = LORLocation(self.player, clear_event, None, region)
+            clear_location.place_locked_item(self.create_event(clear_event))
+            region.locations.append(clear_location)
+            self.node_clear_events[node.key] = clear_event
 
             self.multiworld.regions.append(region)
 
+        if "Keter Realization" in set(self.options.endgoals.value):
+            keter_node = next((node for node in self.progression_nodes if node.id == 210009), None)
+            if keter_node is not None:
+                event_name = "Keter Realization Goal Completed"
+                event_location = LORLocation(self.player, event_name, None, self.node_regions[keter_node.key])
+                event_location.place_locked_item(self.create_event(event_name))
+                self.node_regions[keter_node.key].locations.append(event_location)
+                self.goal_event_items.append(event_name)
+
+        first_node = nodes_by_key[f"reception:{self.reception_tree.first_reception}"]
+        first_entrance = menu.connect(self.node_regions[first_node.key])
+        self.node_entrances.setdefault(first_node.key, []).append(first_entrance)
+
+        for source_key, target_key in self.progression_edges:
+            source_region = self.node_regions[source_key]
+            target_region = self.node_regions[target_key]
+            entrance = source_region.connect(target_region)
+            self.node_entrances.setdefault(target_key, []).append(entrance)
+            self.edge_entrances.append((source_key, target_key, entrance))
 
         if not self.options.randomize_black_silence_page.value:
             self.multiworld.get_location("Oliver (1)", self.player).place_locked_item(
                 self.create_item("The Black Silence's Page")
             )
 
-        first_node = nodes_by_key[f"reception:{self.reception_tree.first_reception}"]
-        menu.connect(self.multiworld.get_region(first_node.name, self.player))
+        last_node = nodes_by_key[f"reception:{self.reception_tree.last_reception}"]
+        goal_hub = Region("Goal Hub", self.player, self.multiworld)
+        self.multiworld.regions.append(goal_hub)
+        self.node_regions["goal_hub"] = goal_hub
+        goal_hub_entrance = self.node_regions[last_node.key].connect(goal_hub)
+        self.node_entrances.setdefault("goal_hub", []).append(goal_hub_entrance)
+        self.edge_entrances.append((last_node.key, "goal_hub", goal_hub_entrance))
 
-        for source_key, target_key in self.progression_edges:
-            source_node = nodes_by_key[source_key]
-            target_node = nodes_by_key[target_key]
-            source_region = self.multiworld.get_region(source_node.name, self.player)
-            target_region = self.multiworld.get_region(target_node.name, self.player)
+        selected_goals = self._selected_endgoal_receptions()
+        for goal_node in selected_goals:
+            key = f"endgoal:{goal_node.id}"
+            region = Region(goal_node.name, self.player, self.multiworld)
+            self.node_regions[key] = region
 
-            entrance = source_region.connect(target_region)
-            set_rule(entrance, self._make_access_rule(target_node))
-
-        endgame = Region("Endgame", self.player, self.multiworld)
-
-        for node in endgoal_receptions:
-            for i in range(node.checks):
-                location_name = f"{node.name} ({i + 1})"
-                location = LORLocation(self.player, location_name, locations_name_to_id[location_name], endgame)
+            for index in range(goal_node.checks):
+                location_name = f"{goal_node.name} ({index + 1})"
+                location = LORLocation(self.player, location_name, locations_name_to_id[location_name], region)
                 location.progress_type = LocationProgressType.EXCLUDED
-                endgame.locations.append(location)
+                region.locations.append(location)
 
-        victory_event = LORLocation(self.player, "Game Completed", None, endgame)
+            event_name = f"{goal_node.name} Goal Completed"
+            event_location = LORLocation(self.player, event_name, None, region)
+            event_location.place_locked_item(self.create_event(event_name))
+            region.locations.append(event_location)
+            self.goal_event_items.append(event_name)
+
+            self.multiworld.regions.append(region)
+            goal_entrance = goal_hub.connect(region)
+            self.node_entrances.setdefault(key, []).append(goal_entrance)
+            self.edge_entrances.append(("goal_hub", key, goal_entrance))
+
+        victory_region = Region("Victory", self.player, self.multiworld)
+        victory_event = LORLocation(self.player, "Game Completed", None, victory_region)
         victory_event.place_locked_item(self.create_event("One Perfect Book Achieved"))
-        endgame.locations.append(victory_event)
+        victory_region.locations.append(victory_event)
+        self.multiworld.regions.append(victory_region)
+        victory_entrance = goal_hub.connect(victory_region)
+        self.node_entrances.setdefault("victory", []).append(victory_entrance)
+        self.edge_entrances.append(("goal_hub", "victory", victory_entrance))
 
         self.multiworld.completion_condition[self.player] = lambda state: state.has("One Perfect Book Achieved", self.player)
 
-        last_node = nodes_by_key[f"reception:{self.reception_tree.last_reception}"]
-        last_region = self.multiworld.get_region(last_node.name, self.player)
-        last_region.connect(endgame)
+    def _node_requirements_met(self, state, node: ProgressionNode) -> bool:
+        if node.req_books:
+            book_names = [books_dict[book_id].name for book_id in node.req_books]
+            if not state.has_all(book_names, self.player):
+                return False
 
-        self.multiworld.regions.append(endgame)
-
-    def _node_requirements_met(self, state, pnode: ProgressionNode) -> bool:
-        book_names = [books_dict[b].name for b in pnode.req_books]
-
-        if not state.has_all(book_names, self.player):
-            return False
-
-        if pnode.kind == "stage":
-            floor_name = f"{pnode.floor.seph} Floor"
-            librarian_name = f"{pnode.floor.seph} Librarian"
-            binah_bonus = 1 if pnode.floor.seph == "Binah" and state.has("Binah", self.player) else 0
+        if node.kind == "stage":
+            floor_name = f"{node.floor.seph} Floor"
+            librarian_name = f"{node.floor.seph} Librarian"
+            binah_bonus = 1 if node.floor.seph == "Binah" and state.has("Binah", self.player) else 0
             return (
                 state.has(floor_name, self.player)
-                and state.has(librarian_name, self.player, pnode.req_librarians - 1 - binah_bonus)
+                and state.has(librarian_name, self.player, max(0, node.req_librarians - 1 - binah_bonus))
             )
 
-        return logic.lor_enough_librarians(pnode.req_librarians, state, self.player)
+        return logic.lor_enough_librarians(node.req_librarians, state, self.player)
 
-    def _lower_chapter_nodes_clearable(self, state, pnode: ProgressionNode) -> bool:
-        for previous_node in self.progression_nodes:
-            if previous_node.key == pnode.key or previous_node.chapter >= pnode.chapter:
-                continue
-            if not state.can_reach(previous_node.name, "Region", self.player):
+    def _make_node_access_rule(self, node: ProgressionNode):
+        def access_rule(state, node=node):
+            return self._node_requirements_met(state, node)
+        return access_rule
+
+    def _make_edge_access_rule(self, source_key: str, target_key: str):
+        nodes_by_key = {node.key: node for node in self.progression_nodes}
+        target_node = nodes_by_key.get(target_key)
+        source_event = self.node_clear_events.get(source_key)
+
+        def access_rule(state, target_node=target_node, source_event=source_event):
+            if source_event is not None and not state.has(source_event, self.player):
                 return False
-            if not self._node_requirements_met(state, previous_node):
+            if target_node is not None and not self._node_requirements_met(state, target_node):
                 return False
-        return True
+            return True
 
-    def _make_location_access_rule(self, pnode: ProgressionNode):
-        def _location_access_rule(state, pnode=pnode):
-            return self._lower_chapter_nodes_clearable(state, pnode)
+        return access_rule
 
-        return _location_access_rule
+    def _make_goal_hub_rule(self):
+        oliver_key = f"reception:{self.reception_tree.last_reception}"
+        oliver_event = self.node_clear_events.get(oliver_key)
 
-    def _make_access_rule(self, pnode: ProgressionNode):
-        def _access_rule(state, pnode=pnode):
-            return self._node_requirements_met(state, pnode)
+        def access_rule(state, oliver_event=oliver_event):
+            return oliver_event is None or state.has(oliver_event, self.player)
 
-        return _access_rule
+        return access_rule
+
+    def _make_victory_rule(self):
+        def victory_rule(state):
+            return state.has_all(self.goal_event_items, self.player)
+        return victory_rule
 
     def create_item(self, item: str) -> LORItem:
         data: LORItemData = items_by_name[item]
-        return LORItem(item, data.type, data.id, self.player)
+        classification = getattr(self, "item_classifications", {}).get(item, data.type)
+        return LORItem(item, classification, data.id, self.player)
 
     def create_event(self, event: str) -> LORItem:
         return LORItem(event, ItemClassification.progression, None, self.player)
@@ -237,27 +318,33 @@ class LORWorld(World):
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
 
         itempool: list[str] = []
-        for i in items_by_name.values():
-            if i.copies > 0:
-                itempool += [i.name] * i.copies
+        for item_name, copies in self.item_copies.items():
+            if copies > 0:
+                itempool.extend([item_name] * copies)
 
-        fillers = ["Book of Everything", "Booster Pack"]
-        filler_name = fillers[self.options.filler_items.value]
-        itempool += [filler_name] * max(0, total_locations - len(itempool))
+        filler_name = ["Book of Everything", "Booster Pack"][self.options.filler_items.value]
+        itempool.extend([filler_name] * max(0, total_locations - len(itempool)))
 
         if len(itempool) > total_locations:
             raise Exception(f"LORAP item pool has {len(itempool)} items for only {total_locations} locations")
 
-        self.multiworld.itempool += map(self.create_item, itempool)
-
+        self.multiworld.itempool += [self.create_item(item_name) for item_name in itempool]
 
     def set_rules(self) -> None:
-        pass
+        first_key = f"reception:{self.reception_tree.first_reception}"
+
+        for source_key, target_key, entrance in self.edge_entrances:
+            if target_key == "goal_hub":
+                set_rule(entrance, self._make_goal_hub_rule())
+            elif target_key == "victory":
+                set_rule(entrance, self._make_victory_rule())
+            elif target_key.startswith("endgoal:"):
+                set_rule(entrance, self._make_goal_hub_rule())
+            elif target_key != first_key:
+                set_rule(entrance, self._make_edge_access_rule(source_key, target_key))
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
-
         slot_data = self.options.as_dict(
-            "random_seed",
             "endgoals",
             "ensemble_battles",
             "abno_page_shuffle",
@@ -274,11 +361,12 @@ class LORWorld(World):
             "balance_book_requirements",
         )
         slot_data["randomize_reception_tree"] = 1
+        slot_data["lorap_client_seed"] = self.client_seed
+        slot_data["effective_lorap_seed"] = self.effective_lorap_seed
 
-        reception_book_requirements = {
+        slot_data["reception_book_requirements"] = {
             node.id: node.req_books for node in self.reception_tree.reception_nodes
         }
-        slot_data["reception_book_requirements"] = reception_book_requirements
 
         abno_book_requirements: list[list[list[int]]] = []
         abno_fight_order: list[list[int]] = []
@@ -291,28 +379,24 @@ class LORWorld(World):
 
         slot_data["first_reception"] = self.reception_tree.first_reception
         slot_data["last_reception"] = self.reception_tree.last_reception
-
         slot_data["abno_stage_chapters"] = self.setup_result.abno_stage_chapters
 
-
         battle_nodes: dict[str, dict] = {}
-        for pnode in self.progression_nodes:
+        for node in self.progression_nodes:
             node_data = {
-                "id": pnode.id,
-                "name": pnode.name,
-                "kind": pnode.kind,
-                "chapter": pnode.chapter,
-                "req_librarians": pnode.req_librarians,
-                "visual_x": pnode.visual_x,
-                "visual_y": pnode.visual_y,
+                "id": node.id,
+                "name": node.name,
+                "kind": node.kind,
+                "chapter": node.chapter,
+                "req_librarians": node.req_librarians,
+                "visual_x": node.visual_x,
+                "visual_y": node.visual_y,
             }
-            if pnode.kind == "stage" and pnode.floor is not None:
-                node_data["assigned_floor"] = pnode.floor.id
-            battle_nodes[pnode.key] = node_data
+            if node.kind == "stage" and node.floor is not None:
+                node_data["assigned_floor"] = node.floor.id
+            battle_nodes[node.key] = node_data
 
-        battle_edges = [
-            {"source": src, "target": dst} for src, dst in self.progression_edges
-        ]
+        battle_edges = [{"source": source, "target": target} for source, target in self.progression_edges]
 
         last_reception_key = f"reception:{self.reception_tree.last_reception}"
         last_node = next(node for node in self.progression_nodes if node.key == last_reception_key)
@@ -336,5 +420,4 @@ class LORWorld(World):
 
         slot_data["battle_nodes"] = battle_nodes
         slot_data["battle_edges"] = battle_edges
-
         return slot_data
