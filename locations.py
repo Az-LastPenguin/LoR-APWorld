@@ -250,8 +250,6 @@ def _build_branchy_edges(rng: random.Random, first: ProgressionNode, ordinary: l
             raise Exception(f"LORAP could not create edge {first.key} -> {last.key}")
         return edges
 
-    # Branchy still creates several routes, but they branch after a guaranteed
-    # starter reception instead of all starting directly from Rats.
     starter = _pick_starter_node(ordinary)
     remaining = [node for node in ordinary if node is not starter]
     if not _add_edge(edges, first, starter):
@@ -263,9 +261,6 @@ def _build_branchy_edges(rng: random.Random, first: ProgressionNode, ordinary: l
         lane_index = max(0, min(lanes_count - 1, lane_index + rng.choice([-1, 0, 0, 1])))
         node.branch_side = lane_index - (lanes_count // 2)
 
-    # Keep Rats as a strict single-root bootstrap node. It may only point to
-    # the guaranteed starter; all further branchy expansion must start from the
-    # starter or later nodes.
     connected: list[ProgressionNode] = [starter]
     pending = sorted(remaining, key=lambda node: (node.progression_weight, node.chapter, node.id))
 

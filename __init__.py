@@ -346,6 +346,9 @@ class LORWorld(World):
         return requirement_chapters
 
     def _is_book_location_allowed(self, item, node: ProgressionNode, requirement_chapters: dict[str, int]) -> bool:
+        if item.player != self.player:
+            return True
+
         required_chapter = requirement_chapters.get(item.name)
         if required_chapter is None:
             return True
@@ -353,19 +356,23 @@ class LORWorld(World):
         maximum_chapter = min(7, required_chapter + (1 if required_chapter <= 2 else 2))
         return node.chapter <= maximum_chapter
 
+    def _make_book_item_rule(self, node: ProgressionNode, previous_item_rule, requirement_chapters: dict[str, int]):
+        def item_rule(item):
+            return previous_item_rule(item) and self._is_book_location_allowed(item, node, requirement_chapters)
+
+        return item_rule
+
     def _set_book_placement_rules(self) -> None:
+        if not self._option_enabled("balance_book_requirements"):
+            return
+
         requirement_chapters = self._book_requirement_chapters()
         if not requirement_chapters:
             return
 
         for location_name, node in self.location_nodes.items():
             location = self.multiworld.get_location(location_name, self.player)
-            previous_item_rule = location.item_rule
-
-            def item_rule(item, node=node, previous_item_rule=previous_item_rule, requirement_chapters=requirement_chapters):
-                return previous_item_rule(item) and self._is_book_location_allowed(item, node, requirement_chapters)
-
-            location.item_rule = item_rule
+            location.item_rule = self._make_book_item_rule(node, location.item_rule, requirement_chapters)
 
     def set_rules(self) -> None:
         first_key = f"reception:{self.reception_tree.first_reception}"
