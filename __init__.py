@@ -164,6 +164,7 @@ class LORWorld(World):
         self.edge_entrances: list[tuple[str, str, object]] = []
         self.node_clear_events: dict[str, str] = {}
         self.goal_event_items: list[str] = []
+        self.location_nodes: dict[str, ProgressionNode] = {}
 
         menu = Region("Menu", self.player, self.multiworld)
         self.multiworld.regions.append(menu)
@@ -180,6 +181,7 @@ class LORWorld(World):
                 if node.id == self.reception_tree.first_reception and node.kind == "reception":
                     location.progress_type = LocationProgressType.PRIORITY
                 region.locations.append(location)
+                self.location_nodes[location_name] = node
 
             clear_event = f"{node.name} Cleared"
             clear_location = LORLocation(self.player, clear_event, None, region)
@@ -330,6 +332,41 @@ class LORWorld(World):
 
         self.multiworld.itempool += [self.create_item(item_name) for item_name in itempool]
 
+    def _book_requirement_chapters(self) -> dict[str, int]:
+        requirement_chapters: dict[str, int] = {}
+
+        for node in self.progression_nodes:
+            for book_id in node.req_books:
+                book_name = books_dict[book_id].name
+                if book_name not in requirement_chapters:
+                    requirement_chapters[book_name] = node.chapter
+                else:
+                    requirement_chapters[book_name] = min(requirement_chapters[book_name], node.chapter)
+
+        return requirement_chapters
+
+    def _is_book_location_allowed(self, item, node: ProgressionNode, requirement_chapters: dict[str, int]) -> bool:
+        required_chapter = requirement_chapters.get(item.name)
+        if required_chapter is None:
+            return True
+
+        maximum_chapter = min(7, required_chapter + (1 if required_chapter <= 2 else 2))
+        return node.chapter <= maximum_chapter
+
+    def _set_book_placement_rules(self) -> None:
+        requirement_chapters = self._book_requirement_chapters()
+        if not requirement_chapters:
+            return
+
+        for location_name, node in self.location_nodes.items():
+            location = self.multiworld.get_location(location_name, self.player)
+            previous_item_rule = location.item_rule
+
+            def item_rule(item, node=node, previous_item_rule=previous_item_rule, requirement_chapters=requirement_chapters):
+                return previous_item_rule(item) and self._is_book_location_allowed(item, node, requirement_chapters)
+
+            location.item_rule = item_rule
+
     def set_rules(self) -> None:
         first_key = f"reception:{self.reception_tree.first_reception}"
 
@@ -342,6 +379,8 @@ class LORWorld(World):
                 set_rule(entrance, self._make_goal_hub_rule())
             elif target_key != first_key:
                 set_rule(entrance, self._make_edge_access_rule(source_key, target_key))
+
+        self._set_book_placement_rules()
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         slot_data = self.options.as_dict(

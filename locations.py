@@ -80,10 +80,6 @@ def _option_enabled(options: LOROptions, option_name: str) -> bool:
     return bool(getattr(option, "value", option))
 
 
-def _option_value(options: LOROptions, option_name: str, default: int = 0) -> int:
-    option = getattr(options, option_name, default)
-    return int(getattr(option, "value", option))
-
 
 def _clone_reception_nodes() -> list[ReceptionNode]:
     return copy.deepcopy(reception_nodes)
@@ -136,8 +132,20 @@ def _outgoing_count(edges: list[tuple[str, str]], key: str) -> int:
     return sum(1 for source, _ in edges if source == key)
 
 
+def _max_forward_chapter_jump(source: ProgressionNode) -> int:
+    return 1 if source.chapter <= 2 else 2
+
+
+def _can_connect_chapters(source: ProgressionNode, target: ProgressionNode) -> bool:
+    if target.chapter >= source.chapter:
+        return target.chapter - source.chapter <= _max_forward_chapter_jump(source)
+    return source.chapter - target.chapter <= 1
+
+
 def _add_edge(edges: list[tuple[str, str]], source: ProgressionNode, target: ProgressionNode) -> bool:
     if source.key == target.key:
+        return False
+    if not _can_connect_chapters(source, target):
         return False
     edge = (source.key, target.key)
     if edge in edges:
@@ -203,123 +211,108 @@ def _pick_starter_node(ordinary: list[ProgressionNode]) -> ProgressionNode:
         candidates = ordinary
     return min(candidates, key=lambda node: (node.progression_weight, node.chapter, node.id))
 
-def _build_linear_edges(rng: random.Random, first: ProgressionNode, ordinary: list[ProgressionNode], last: ProgressionNode) -> list[tuple[str, str]]:
-    edges: list[tuple[str, str]] = []
-    if not ordinary:
-        _add_edge(edges, first, last)
-        return edges
 
-    # Keep Rats as a true single-root. The only direct child of Rats is a
-    # guaranteed early reception starter, which is covered by bootstrap_count = 2.
-    # This prevents the first sphere from needing more required books than Rats
-    # can physically contain.
-    starter = _pick_starter_node(ordinary)
-    remaining = [node for node in ordinary if node is not starter]
+def _valid_source_candidates(
+    edges: list[tuple[str, str]],
+    connected: list[ProgressionNode],
+    target: ProgressionNode,
+) -> list[ProgressionNode]:
+    return [
+        source for source in connected
+        if source.progression_weight < target.progression_weight
+        and _can_connect_chapters(source, target)
+        and _outgoing_count(edges, source.key) < max(1, source.source.checks)
+    ]
 
-    backbone_count = max(12, min(len(remaining), int(len(remaining) * rng.uniform(0.42, 0.54))))
-    backbone: list[ProgressionNode] = []
 
-    for index in range(backbone_count):
-        source_index = round((index + 1) * (len(remaining) + 1) / (backbone_count + 1)) - 1
-        source_index += rng.randint(-2, 2)
-        source_index = max(0, min(len(remaining) - 1, source_index))
-        candidate = remaining[source_index]
-        if candidate not in backbone:
-            backbone.append(candidate)
+def _choose_edge_source(
+    rng: random.Random,
+    edges: list[tuple[str, str]],
+    connected: list[ProgressionNode],
+    target: ProgressionNode,
+) -> ProgressionNode | None:
+    candidates = _valid_source_candidates(edges, connected, target)
+    if not candidates:
+        return None
 
-    while len(backbone) < backbone_count and remaining:
-        candidate = rng.choice(remaining)
-        if candidate not in backbone:
-            backbone.append(candidate)
+    candidates.sort(key=lambda node: (
+        abs(node.progression_weight - target.progression_weight),
+        abs(node.chapter - target.chapter),
+        node.id,
+    ))
+    return rng.choice(candidates[:min(6, len(candidates))])
 
-    backbone.sort(key=lambda node: node.progression_weight)
-    for node in backbone:
-        node.backbone = True
-
-    main_path = [first, starter, *backbone, last]
-    for source, target in zip(main_path, main_path[1:]):
-        if not _add_edge(edges, source, target):
-            raise Exception(f"LORAP could not create linear edge {source.key} -> {target.key}")
-
-    side_nodes = [node for node in remaining if node not in backbone]
-    cursor = 0
-    side = -1
-    while cursor < len(side_nodes):
-        branch_length = 1
-        if cursor + 1 < len(side_nodes) and rng.random() < 0.28:
-            branch_length += 1
-        branch = side_nodes[cursor:cursor + branch_length]
-        cursor += branch_length
-        side *= -1
-
-        for node in branch:
-            node.branch_side = side
-
-        # Branches may start from the starter or later backbone nodes, but never
-        # directly from Rats.
-        source_candidates = [
-            node for node in [starter, *backbone]
-            if node.progression_weight < branch[0].progression_weight
-            and _outgoing_count(edges, node.key) < node.source.checks
-        ]
-        if not source_candidates:
-            source_candidates = [starter]
-        source_candidates.sort(key=lambda node: abs(node.progression_weight - branch[0].progression_weight))
-        source = rng.choice(source_candidates[:min(6, len(source_candidates))])
-        _add_edge(edges, source, branch[0])
-
-        for parent, child in zip(branch, branch[1:]):
-            _add_edge(edges, parent, child)
-
-    return edges
 
 def _build_branchy_edges(rng: random.Random, first: ProgressionNode, ordinary: list[ProgressionNode], last: ProgressionNode) -> list[tuple[str, str]]:
     edges: list[tuple[str, str]] = []
     if not ordinary:
-        _add_edge(edges, first, last)
+        if not _add_edge(edges, first, last):
+            raise Exception(f"LORAP could not create edge {first.key} -> {last.key}")
         return edges
 
     # Branchy still creates several routes, but they branch after a guaranteed
     # starter reception instead of all starting directly from Rats.
     starter = _pick_starter_node(ordinary)
     remaining = [node for node in ordinary if node is not starter]
-    _add_edge(edges, first, starter)
+    if not _add_edge(edges, first, starter):
+        raise Exception(f"LORAP could not create starter edge {first.key} -> {starter.key}")
 
     lanes_count = min(rng.randint(3, 5), max(2, starter.source.checks))
-    lanes: list[list[ProgressionNode]] = [[] for _ in range(lanes_count)]
-
-    for index, node in enumerate(remaining):
+    for index, node in enumerate(sorted(remaining, key=lambda node: node.progression_weight)):
         lane_index = min(lanes_count - 1, int(index * lanes_count / max(1, len(remaining))))
         lane_index = max(0, min(lanes_count - 1, lane_index + rng.choice([-1, 0, 0, 1])))
-        lanes[lane_index].append(node)
         node.branch_side = lane_index - (lanes_count // 2)
 
-    connected_lanes = 0
-    for lane in lanes:
-        if not lane:
-            continue
-        lane.sort(key=lambda node: node.progression_weight)
-        path = [starter, *lane, last]
-        lane_connected = True
-        for source, target in zip(path, path[1:]):
-            if not _add_edge(edges, source, target):
-                lane_connected = False
-                break
-        if lane_connected:
-            connected_lanes += 1
+    # Keep Rats as a strict single-root bootstrap node. It may only point to
+    # the guaranteed starter; all further branchy expansion must start from the
+    # starter or later nodes.
+    connected: list[ProgressionNode] = [starter]
+    pending = sorted(remaining, key=lambda node: (node.progression_weight, node.chapter, node.id))
 
-    if connected_lanes == 0:
-        _add_edge(edges, starter, last)
+    while pending:
+        connectable = [node for node in pending if _valid_source_candidates(edges, connected, node)]
+        if not connectable:
+            sample = ", ".join(f"{node.key}:ch{node.chapter}" for node in pending[:8])
+            raise Exception(f"LORAP could not connect pending nodes within chapter jump limits: {sample}")
 
-    ordered = sorted(remaining, key=lambda node: node.progression_weight)
+        connectable.sort(key=lambda node: (node.progression_weight, rng.random(), node.id))
+        target = rng.choice(connectable[:min(4, len(connectable))])
+        source = _choose_edge_source(rng, edges, connected, target)
+        if source is None or not _add_edge(edges, source, target):
+            raise Exception(f"LORAP could not create branchy edge into {target.key}")
+
+        connected.append(target)
+        pending.remove(target)
+
+    last_sources = _valid_source_candidates(edges, connected, last)
+    if not last_sources:
+        raise Exception("LORAP could not connect Oliver within chapter jump limits")
+
+    last_sources.sort(key=lambda node: (abs(node.chapter - last.chapter), abs(node.progression_weight - last.progression_weight), node.id))
+    if not _add_edge(edges, last_sources[0], last):
+        raise Exception(f"LORAP could not create final edge {last_sources[0].key} -> {last.key}")
+
+    ordered = sorted(connected[1:], key=lambda node: node.progression_weight)
     for index, source in enumerate(ordered):
         if rng.random() > 0.20:
             continue
-        if _outgoing_count(edges, source.key) >= source.source.checks:
+        if _outgoing_count(edges, source.key) >= max(1, source.source.checks):
             continue
-        target = _pick_forward_target(rng, ordered + [last], index, 2, 10, last)
-        if target.progression_weight > source.progression_weight:
-            _add_edge(edges, source, target)
+
+        possible_targets = [
+            target for target in ordered[index + 2:] + [last]
+            if target.progression_weight > source.progression_weight
+            and _can_connect_chapters(source, target)
+        ]
+        if not possible_targets:
+            continue
+
+        possible_targets.sort(key=lambda node: (
+            abs(node.progression_weight - source.progression_weight),
+            abs(node.chapter - source.chapter),
+            node.id,
+        ))
+        _add_edge(edges, source, rng.choice(possible_targets[:min(10, len(possible_targets))]))
 
     return edges
 
@@ -405,7 +398,6 @@ def build_mixed_battle_graph(
     rng: random.Random,
     tree: ReceptionTree,
     floors: list[Floor],
-    tree_shape: int,
 ) -> tuple[list[ProgressionNode], list[tuple[str, str]], dict[int, int]]:
     first, ordinary, last = _make_progression_nodes(tree, floors)
     _assign_progression_weights(rng, ordinary)
@@ -413,14 +405,11 @@ def build_mixed_battle_graph(
     last.progression_weight = 1000.0
     ordinary.sort(key=lambda node: _node_sort_key(rng, node))
 
-    if tree_shape == 1:
-        edges = _build_branchy_edges(rng, first, ordinary, last)
-    else:
-        edges = _build_linear_edges(rng, first, ordinary, last)
+    edges = _build_branchy_edges(rng, first, ordinary, last)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
     ordered = _topological_order(nodes_by_key, edges)
-    _assign_visual_layout(rng, ordered, edges, first, last, branchy=(tree_shape == 1))
+    _assign_visual_layout(rng, ordered, edges, first, last, branchy=True)
     stage_chapters = {node.id: node.chapter for node in ordered if node.kind == "stage"}
     return ordered, edges, stage_chapters
 
@@ -504,6 +493,8 @@ def validate_setup_result(result: LORSetupResult) -> None:
             raise Exception(f"LORAP graph edge references an unknown node: {source} -> {target}")
         if nodes_by_key[target].progression_weight <= nodes_by_key[source].progression_weight and target != f"reception:{result.tree.last_reception}":
             raise Exception(f"LORAP graph has a backwards edge: {source} -> {target}")
+        if not _can_connect_chapters(nodes_by_key[source], nodes_by_key[target]):
+            raise Exception(f"LORAP graph has an invalid chapter jump: {source} -> {target}")
         outgoing[source].append(target)
         indegree[target] += 1
 
@@ -512,6 +503,10 @@ def validate_setup_result(result: LORSetupResult) -> None:
     roots = [key for key, degree in indegree.items() if degree == 0]
     if roots != [first_key]:
         raise Exception(f"LORAP graph must start only from Rats, got roots: {roots}")
+
+    first_children = outgoing[first_key]
+    if len(first_children) != 1:
+        raise Exception(f"LORAP Rats must have exactly one child, got {len(first_children)}: {first_children}")
 
     reached: set[str] = set()
     queue = [first_key]
@@ -577,8 +572,7 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
             _reset_req_books(tree, floors)
             _shuffle_floor_content(rng, floors, options)
 
-            tree_shape = _option_value(options, "tree_shape", 0)
-            progression_nodes, progression_edges, abno_stage_chapters = build_mixed_battle_graph(rng, tree, floors, tree_shape)
+            progression_nodes, progression_edges, abno_stage_chapters = build_mixed_battle_graph(rng, tree, floors)
             used_book_requirements = assign_archipelago_book_requirements(rng, progression_nodes, progression_edges, options)
 
             result = LORSetupResult(
