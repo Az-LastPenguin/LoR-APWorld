@@ -197,17 +197,6 @@ class CustomLORAPSeed(FreeText):
     display_name = "Custom LORAP Seed"
     default = ""
 
-class TreeShape(Choice):
-    """
-    Select the structure of the randomized battle tree.
-
-    Linear - one main route from Rats to Oliver with optional dead-end branches.
-    Branchy - several forward routes from Rats toward Oliver with many reconnecting branches.
-    """
-    display_name = "Battle Tree Shape"
-    option_linear = 0
-    option_branchy = 1
-    default = 1
 
 ### PROGRESSION ###
 # class RandomizeReceptionTree(Toggle): # TODO: Allow non-randomzied reception tree w/ Yar's logic
@@ -427,7 +416,6 @@ class LOROptions(PerGameCommonOptions):
     custom_lorap_seed: CustomLORAPSeed
     # Progression
     # randomize_reception_tree: RandomizeReceptionTree
-    tree_shape: TreeShape
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations
