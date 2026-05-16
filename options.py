@@ -277,7 +277,7 @@ class PassiveLimitsItems(Range):
     """
     display_name = "Passive Limits Break Items"
     range_start = 0
-    range_end = 100
+    range_end = 25
     default = 10
 
 class StartingPassiveLimitsItems(Range):
@@ -286,7 +286,7 @@ class StartingPassiveLimitsItems(Range):
     """
     display_name = "Starting Passive Limits Break Items"
     range_start = 0
-    range_end = 100
+    range_end = 25
     default = 2
 
 class EmotionLimitsItems(Range):

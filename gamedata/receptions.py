@@ -63,7 +63,7 @@ reception_nodes: list[ReceptionNode] = [
     ReceptionNode(id=40001, name="Shi Association", checks=5, next=[40007], chapter = 5, req_librarians=2),
     ReceptionNode(id=40002, name="Puppets", checks=5, next=[40006], chapter = 5, req_librarians=2),
     ReceptionNode(id=40003, name="The 8 o'Clock Circus", checks=5, next=[40008], chapter = 5, req_librarians=2),
-    ReceptionNode(id=40004, name="Sweepers", checks=5, next=[40005], chapter = 5, req_librarians=2),
+    ReceptionNode(id=40004, name="Sweepers", checks=5, next=[40005], chapter = 5, req_librarians=3),
     ReceptionNode(id=40005, name="Index Proselytes", checks=6, next=[50003, 100013, 100015, 100016, 100017, 100018, 100019], chapter = 5, req_librarians=2),
     ReceptionNode(id=40006, name="WARP Cleanup Crew", checks=6, next=[50005, 100013, 100015, 100016, 100017, 100018, 100019], chapter = 5, req_librarians=2),
     ReceptionNode(id=40007, name="Smiling Faces", checks=6, next=[50006, 100013, 100015, 100016, 100017, 100018, 100019], chapter = 5, req_librarians=2),
