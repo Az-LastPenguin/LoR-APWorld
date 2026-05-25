@@ -32,8 +32,8 @@ class ProgressionNode:
     order_index: int = 0
     backbone: bool = False
     branch_side: int = 0
-    visual_x: float = 0.0
-    visual_y: float = 0.0
+    #visual_x: int = 0 #float = 0.0
+    #visual_y: int = 0 #float = 0.0
 
     @property
     def req_books(self) -> list[int]:
@@ -150,7 +150,7 @@ def _add_edge(edges: list[tuple[str, str]], source: ProgressionNode, target: Pro
     edge = (source.key, target.key)
     if edge in edges:
         return True
-    if _outgoing_count(edges, source.key) >= max(1, source.source.checks):
+    if _outgoing_count(edges, source.key) >= 3: #max(1, source.source.checks):
         return False
     edges.append(edge)
     return True
@@ -311,50 +311,50 @@ def _build_branchy_edges(rng: random.Random, first: ProgressionNode, ordinary: l
 
     return edges
 
-def _assign_visual_layout(
-    rng: random.Random,
-    ordered: list[ProgressionNode],
-    edges: list[tuple[str, str]],
-    first: ProgressionNode,
-    last: ProgressionNode,
-    branchy: bool,
-) -> None:
-    for index, node in enumerate(ordered):
-        node.order_index = index
-
-    ordinary = [node for node in ordered if node.key not in {first.key, last.key}]
-    ordinary.sort(key=lambda node: (node.order_index, node.progression_weight, node.id))
-
-    # Compact grid. Do not push rows down to satisfy every visual edge: branchy
-    # DAGs contain many cross-links, and row-pushing can expand the map into an
-    # unusably tall column. The graph still controls AP logic; this is only a
-    # readable clickable projection of that graph.
-    columns = 7 if branchy else 6
-    x_spacing = 330.0 if branchy else 350.0
-    y_spacing = 220.0 if branchy else 240.0
-    max_abs_x = 1320.0
-
-    first.visual_x = 0.0
-    first.visual_y = 0.0
-
-    rows: list[list[ProgressionNode]] = []
-    for index in range(0, len(ordinary), columns):
-        rows.append(ordinary[index:index + columns])
-
-    for row_index, row in enumerate(rows, start=1):
-        row_size = len(row)
-        for col_index, node in enumerate(row):
-            centered_col = col_index - (row_size - 1) / 2.0
-            node.visual_x = centered_col * x_spacing
-            node.visual_y = row_index * y_spacing
-            node.visual_x = max(-max_abs_x, min(max_abs_x, node.visual_x))
-
-    last.visual_x = 0.0
-    last.visual_y = (len(rows) + 1) * y_spacing
-
-    for node in ordered:
-        node.visual_x = round(node.visual_x, 2)
-        node.visual_y = round(node.visual_y, 2)
+#def _assign_visual_layout(
+#    rng: random.Random,
+#    ordered: list[ProgressionNode],
+#    edges: list[tuple[str, str]],
+#    first: ProgressionNode,
+#    last: ProgressionNode,
+#    branchy: bool,
+#) -> None:
+#    for index, node in enumerate(ordered):
+#        node.order_index = index
+#
+#    ordinary = [node for node in ordered if node.key not in {first.key, last.key}]
+#    ordinary.sort(key=lambda node: (node.order_index, node.progression_weight, node.id))
+#
+#    # Compact grid. Do not push rows down to satisfy every visual edge: branchy
+#    # DAGs contain many cross-links, and row-pushing can expand the map into an
+#    # unusably tall column. The graph still controls AP logic; this is only a
+#    # readable clickable projection of that graph.
+#    columns = 7 if branchy else 6
+#    x_spacing = 330.0 if branchy else 350.0
+#    y_spacing = 220.0 if branchy else 240.0
+#    max_abs_x = 1320.0
+#
+#    first.visual_x = 0.0
+#    first.visual_y = 0.0
+#
+#    rows: list[list[ProgressionNode]] = []
+#    for index in range(0, len(ordinary), columns):
+#        rows.append(ordinary[index:index + columns])
+#
+#    for row_index, row in enumerate(rows, start=1):
+#        row_size = len(row)
+#        for col_index, node in enumerate(row):
+#            centered_col = col_index - (row_size - 1) / 2.0
+#            node.visual_x = centered_col * x_spacing
+#            node.visual_y = row_index * y_spacing
+#            node.visual_x = max(-max_abs_x, min(max_abs_x, node.visual_x))
+#
+#    last.visual_x = 0.0
+#    last.visual_y = (len(rows) + 1) * y_spacing
+#
+#    for node in ordered:
+#        node.visual_x = round(node.visual_x, 2)
+#        node.visual_y = round(node.visual_y, 2)
 
 
 
@@ -404,7 +404,7 @@ def build_mixed_battle_graph(
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
     ordered = _topological_order(nodes_by_key, edges)
-    _assign_visual_layout(rng, ordered, edges, first, last, branchy=True)
+    # _assign_visual_layout(rng, ordered, edges, first, last, branchy=True)
     stage_chapters = {node.id: node.chapter for node in ordered if node.kind == "stage"}
     return ordered, edges, stage_chapters
 
@@ -579,8 +579,10 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
                 used_book_requirements=used_book_requirements,
             )
             validate_setup_result(result)
+
             return result
         except Exception as error:
+            print(f"Expection: {error}; At: {error.__traceback__.tb_lineno}")
             last_error = error
 
-    raise Exception(f"LORAP failed to generate a valid progression graph: {last_error}")
+    raise Exception(f"LORAP failed to generate a valid progression graph: {last_error}; At line: {last_error.__traceback__.tb_lineno}")

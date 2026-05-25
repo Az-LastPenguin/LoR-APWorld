@@ -435,8 +435,8 @@ class LORWorld(World):
                 "kind": node.kind,
                 "chapter": node.chapter,
                 "req_librarians": node.req_librarians,
-                "visual_x": node.visual_x,
-                "visual_y": node.visual_y,
+                #"visual_x": node.visual_x,
+                #"visual_y": node.visual_y,
             }
             if node.kind == "stage" and node.floor is not None:
                 node_data["assigned_floor"] = node.floor.id
@@ -459,8 +459,8 @@ class LORWorld(World):
                     "kind": "reception",
                     "chapter": goal_node.chapter,
                     "req_librarians": goal_node.req_librarians,
-                    "visual_x": round(last_node.visual_x + offset * goal_spacing, 2),
-                    "visual_y": round(last_node.visual_y + 360.0 + abs(offset) * 25.0, 2),
+                    #"visual_x": round(last_node.visual_x + offset * goal_spacing, 2),
+                    #"visual_y": round(last_node.visual_y + 360.0 + abs(offset) * 25.0, 2),
                 }
                 battle_edges.append({"source": last_reception_key, "target": key})
 
