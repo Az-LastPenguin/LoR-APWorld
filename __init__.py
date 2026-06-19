@@ -445,10 +445,10 @@ class LORWorld(World):
         battle_edges = [{"source": source, "target": target} for source, target in self.progression_edges]
 
         last_reception_key = f"reception:{self.reception_tree.last_reception}"
-        last_node = next(node for node in self.progression_nodes if node.key == last_reception_key)
+        #last_node = next(node for node in self.progression_nodes if node.key == last_reception_key)
         selected_goals = self._selected_endgoal_receptions()
         if selected_goals:
-            goal_spacing = 250.0
+            #goal_spacing = 250.0
             center = (len(selected_goals) - 1) / 2.0
             for index, goal_node in enumerate(selected_goals):
                 offset = index - center

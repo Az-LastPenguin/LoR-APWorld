@@ -199,7 +199,7 @@ class CustomLORAPSeed(FreeText):
 
 
 ### PROGRESSION ###
-# class RandomizeReceptionTree(Toggle): # TODO: Allow non-randomzied reception tree w/ Yar's logic
+# class RandomizeReceptionTree(Toggle): # NOTE: Do we really need it?
 #     """
 #     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
 #     unique for each Seed.

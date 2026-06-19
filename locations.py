@@ -582,7 +582,8 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
 
             return result
         except Exception as error:
-            print(f"Expection: {error}; At: {error.__traceback__.tb_lineno}")
+            #if error.__traceback__:
+            #    print(f"Expection: {error}; At: {error.__traceback__.tb_lineno}")
             last_error = error
 
-    raise Exception(f"LORAP failed to generate a valid progression graph: {last_error}; At line: {last_error.__traceback__.tb_lineno}")
+    raise Exception(f"LORAP failed to generate a valid progression graph: {last_error};")
