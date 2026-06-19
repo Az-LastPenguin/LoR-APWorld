@@ -150,7 +150,7 @@ def _add_edge(edges: list[tuple[str, str]], source: ProgressionNode, target: Pro
     edge = (source.key, target.key)
     if edge in edges:
         return True
-    if _outgoing_count(edges, source.key) >= 3: #max(1, source.source.checks):
+    if _outgoing_count(edges, source.key) >= max(1, source.source.checks):
         return False
     edges.append(edge)
     return True
