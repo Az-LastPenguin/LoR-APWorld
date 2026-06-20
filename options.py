@@ -168,6 +168,20 @@ class BalanceBookRequirements(Toggle):
     display_name = "Balance Book Requirements"
     default = True
 
+class BookRequirementDensity(Range):
+    """
+    Controls how many nodes in invitations menu will share same book requirment.
+
+    At 100, every locked battle node receives its own book requirement.
+    Lower values makes nearby nodes share the same requirements. At 1, nearly
+    the entire graph may be unlocked by the one book.
+    """
+
+    display_name = "Book Requirement Density"
+    range_start = 1
+    range_end = 100
+    default = 50
+
 class ShuffleAbnos(Toggle):
     """
     If 'true', Abnormalities will be shuffled between the floors.
@@ -413,6 +427,7 @@ class LOROptions(PerGameCommonOptions):
     randomize_black_silence_page: RandomizeBlackSilencePage
     book_contents_randomization: BookContentsRandomization
     balance_book_requirements: BalanceBookRequirements
+    book_requirement_density: BookRequirementDensity
     custom_lorap_seed: CustomLORAPSeed
     # Progression
     # randomize_reception_tree: RandomizeReceptionTree

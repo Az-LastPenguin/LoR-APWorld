@@ -1,5 +1,6 @@
 import copy
 import random
+from collections import deque
 from dataclasses import dataclass
 from BaseClasses import Location
 from .options import LOROptions
@@ -78,6 +79,11 @@ class LORSetupResult:
 def _option_enabled(options: LOROptions, option_name: str) -> bool:
     option = getattr(options, option_name)
     return bool(getattr(option, "value", option))
+
+
+def _option_value(options: LOROptions, option_name: str, default: int) -> int:
+    option = getattr(options, option_name, default)
+    return int(getattr(option, "value", option))
 
 
 
@@ -182,6 +188,41 @@ def _topological_order(nodes_by_key: dict[str, ProgressionNode], edges: list[tup
         raise Exception("LORAP progression graph contains a cycle")
 
     return [nodes_by_key[key] for key in ordered]
+
+
+def _path_exists(
+    edges: list[tuple[str, str]],
+    start: str,
+    target: str,
+    ignored_edge: tuple[str, str] | None = None,
+) -> bool:
+    outgoing: dict[str, list[str]] = {}
+    for edge in edges:
+        if edge == ignored_edge:
+            continue
+        outgoing.setdefault(edge[0], []).append(edge[1])
+
+    reached: set[str] = set()
+    queue = deque([start])
+    while queue:
+        key = queue.popleft()
+        if key == target:
+            return True
+        if key in reached:
+            continue
+        reached.add(key)
+        queue.extend(outgoing.get(key, []))
+    return False
+
+
+def _remove_transitive_edges(edges: list[tuple[str, str]], protected_target: str) -> list[tuple[str, str]]:
+    reduced = list(edges)
+    for edge in list(edges):
+        if edge[1] == protected_target:
+            continue
+        if _path_exists(reduced, edge[0], edge[1], ignored_edge=edge):
+            reduced.remove(edge)
+    return reduced
 
 
 def _pick_forward_target(
@@ -401,6 +442,7 @@ def build_mixed_battle_graph(
     ordinary.sort(key=lambda node: _node_sort_key(rng, node))
 
     edges = _build_branchy_edges(rng, first, ordinary, last)
+    edges = _remove_transitive_edges(edges, last.key)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
     ordered = _topological_order(nodes_by_key, edges)
@@ -418,10 +460,10 @@ def assign_archipelago_book_requirements(
     require_receptions = _option_enabled(options, "receptions_require_books")
     require_floors = _option_enabled(options, "floors_require_books")
     balance_books = _option_enabled(options, "balance_book_requirements") if hasattr(options, "balance_book_requirements") else True
+    density = max(1, min(100, _option_value(options, "book_requirement_density", 100)))
 
     used_books: set[int] = set()
     max_index = max(1, len(progression_nodes) - 1)
-    first_key = progression_nodes[0].key if progression_nodes else ""
     bootstrap_count = 2
     bootstrap_keys = {node.key for node in progression_nodes[:bootstrap_count]}
 
@@ -457,21 +499,65 @@ def assign_archipelago_book_requirements(
         ]
         return candidates or [book for book in books if book.id not in selected]
 
-    for node in progression_nodes:
-        count = desired_count(node)
-        if count <= 0:
-            continue
+    lockable_nodes = [
+        node for node in progression_nodes
+        if accepts_books(node) and node.key not in bootstrap_keys
+    ]
+    if not lockable_nodes:
+        return used_books
 
-        selected: set[int] = set(node.req_books)
+    neighbors: dict[str, set[str]] = {node.key: set() for node in progression_nodes}
+    for source, target in progression_edges:
+        neighbors[source].add(target)
+        neighbors[target].add(source)
+
+    cluster_count = 1 + round((len(lockable_nodes) - 1) * (density - 1) / 99)
+    if cluster_count == 1:
+        seeds = [lockable_nodes[len(lockable_nodes) // 2]]
+    else:
+        seed_indices = [
+            round(index * (len(lockable_nodes) - 1) / (cluster_count - 1))
+            for index in range(cluster_count)
+        ]
+        seeds = [lockable_nodes[index] for index in seed_indices]
+
+    node_order = {node.key: index for index, node in enumerate(progression_nodes)}
+    owner: dict[str, str] = {seed.key: seed.key for seed in seeds}
+    queue = deque(seed.key for seed in seeds)
+    while queue:
+        key = queue.popleft()
+        for neighbor in sorted(neighbors[key], key=lambda neighbor_key: node_order[neighbor_key]):
+            if neighbor in owner:
+                continue
+            owner[neighbor] = owner[key]
+            queue.append(neighbor)
+
+    clusters: dict[str, list[ProgressionNode]] = {seed.key: [] for seed in seeds}
+    for node in lockable_nodes:
+        clusters[owner[node.key]].append(node)
+
+    cluster_specs: list[tuple[list[ProgressionNode], ProgressionNode, int]] = []
+    for seed in sorted(seeds, key=lambda node: node_order[node.key]):
+        cluster = clusters[seed.key]
+        representative = min(cluster, key=lambda node: node_order[node.key])
+        cluster_specs.append((cluster, representative, desired_count(representative)))
+
+    for cluster, representative, count in cluster_specs:
+        selected: set[int] = set()
         while len(selected) < count:
-            fresh = [book for book in candidate_books(node, selected) if book.id not in used_books]
-            pool = fresh or candidate_books(node, selected)
+            balanced_pool = candidate_books(representative, selected)
+            fresh_pool = [book for book in balanced_pool if book.id not in used_books]
+            if not fresh_pool:
+                fresh_pool = [book for book in books if book.id not in selected and book.id not in used_books]
+            pool = fresh_pool or balanced_pool
             if not pool:
                 break
             selected.add(rng.choice(pool).id)
 
-        node.req_books[:] = sorted(selected)
+        requirement = sorted(selected)
         used_books.update(selected)
+        for node in cluster:
+            node.req_books[:] = requirement
 
     return used_books
 
@@ -504,9 +590,9 @@ def validate_setup_result(result: LORSetupResult) -> None:
         raise Exception(f"LORAP Rats must have exactly one child, got {len(first_children)}: {first_children}")
 
     reached: set[str] = set()
-    queue = [first_key]
+    queue = deque([first_key])
     while queue:
-        key = queue.pop(0)
+        key = queue.popleft()
         if key in reached:
             continue
         reached.add(key)
@@ -517,6 +603,12 @@ def validate_setup_result(result: LORSetupResult) -> None:
         raise Exception(f"LORAP graph has unreachable nodes: {missing[:8]}")
     if last_key not in reached:
         raise Exception("LORAP Oliver is unreachable")
+
+    for edge in result.progression_edges:
+        if edge[1] == last_key:
+            continue
+        if _path_exists(result.progression_edges, edge[0], edge[1], ignored_edge=edge):
+            raise Exception(f"LORAP graph has a transitive edge: {edge[0]} -> {edge[1]}")
 
     for node in result.progression_nodes:
         if node.kind == "stage" and node.floor is None:
