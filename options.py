@@ -211,19 +211,6 @@ class CustomLORAPSeed(FreeText):
     display_name = "Custom LORAP Seed"
     default = ""
 
-
-### PROGRESSION ###
-# class RandomizeReceptionTree(Toggle): # NOTE: Do we really need it?
-#     """
-#     If 'true', reception tree is randomized, with receptions being shuffled and placed randomly, creating a reception tree
-#     unique for each Seed.
-#
-#     First reception is ALWAYS Rats. Last reception is ALWAYS Oliver.
-#     """
-#
-#     display_name = "Randomize Reception Tree"
-#     default = True
-
 class ReceptionsRequireBooks(Toggle):
     """
     If 'true', every reception will require books to send invitation.
@@ -246,10 +233,9 @@ class FloorsRequireBooks(Toggle):
 
 class EnemiesTurnIntoChecks(Toggle):
     """
-    If 'true', instead of receiving Checks after completing the Reception, You get one check for each defeated enemy.
-    (There CAN be more checks than there is enemies!)
-
-    If you really hate yourself and want to complete some receptions more than once.
+    If 'true', you send one item from the reception for each defeated enemy.
+    (Completing the reception will still send remaining items)
+    (This option simply allows for chipping at the enemies to send items without completing the reception to potentially escape BK)
     """
 
     display_name = "Enemies Turn Into Checks"
@@ -410,6 +396,52 @@ class TrapsSevereness(Choice):
     option_dangerous = 2
     default = 1
 
+### OTHER ###
+class Deathlink(Toggle):
+    """
+    !!!NOT IMPLEMENTED!!! TODO
+
+    If 'true', a deathlink is sent on a condition specified in "Outgoing Deathlink" Option.
+    "Incoming Deathlink" option specifies what happens when you receive a deathlink.
+    """
+    
+    display_name = "Deathlink"
+    default = False
+
+class OutgoingDeathlink(Choice):
+    """
+    !!!NOT IMPLEMENTED!!! TODO
+    
+    Select what must happen for a deathlink to be sent.
+
+    UnitDeath - When in a battle and ANY librarian dies, deathlink is sent.
+    TeamWipe - When in a battle and ALL librarians on the floor die, deathlink is sent.
+    StageLoss - When a battle is lost, deathlink is sent. 
+    """
+
+    display_name = "Outgoing Deathlink"
+    option_unitdeath = 0
+    option_teamwipe = 1
+    option_stageloss = 2
+    default = 2
+
+class IncomingDeathlink(Choice):
+    """
+    !!!NOT IMPLEMENTED!!! TODO
+    
+    Select what will happen after receiving a deathlink.
+
+    UnitDeath - After receiving a deathlink while in battle, a random librarian dies.
+    TeamWipe - After receiving a deathlink while in battle, all librarians on the floor die.
+    StageLoss - After receiving a deathlink while in battle, lose the current battle.
+    """
+
+    display_name = "Incoming Deathlink"
+    option_unitdeath = 0
+    option_teamwipe = 1
+    option_stageloss = 2
+    default = 0
+
 @dataclass
 class LOROptions(PerGameCommonOptions):
     # Floor-Related
@@ -430,7 +462,6 @@ class LOROptions(PerGameCommonOptions):
     book_requirement_density: BookRequirementDensity
     custom_lorap_seed: CustomLORAPSeed
     # Progression
-    # randomize_reception_tree: RandomizeReceptionTree
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations
@@ -448,3 +479,4 @@ class LOROptions(PerGameCommonOptions):
     filler_pages: FillerPages
     traps: Traps
     traps_severeness: TrapsSevereness
+    # Other
