@@ -36,7 +36,7 @@ class StartingFloor(Choice):
     default = 10
 
 
-### ENDGOAL-RELATED
+### ENDGOAL-RELATED ###
 class Endgoals(OptionSet):
     """
     Select Endgoals of a Run.
@@ -65,6 +65,17 @@ class EnsembleBattles(Range):
 
 
 ### RANDOMIZATION ###
+class CustomLORAPSeed(FreeText):
+    """
+    Optional custom seed for LORAP-specific generation.
+
+    Leave empty to use Archipelago's normal per-slot random seed.
+    If set, the same value with the same options will reproduce the same LORAP battle tree, book requirements, floor shuffle and client-side RNG seed.
+    """
+
+    display_name = "Custom LORAP Seed"
+    default = ""
+    
 class AbnoPageShuffle(Choice):
     """
     Select the way Abnormality Pages are shuffled.
@@ -182,35 +193,7 @@ class BookRequirementDensity(Range):
     range_end = 100
     default = 50
 
-class ShuffleAbnos(Toggle):
-    """
-    If 'true', Abnormalities will be shuffled between the floors.
-    """
-
-    display_name = "Shuffle Abnormalities"
-    default = True
-
-class ShuffleRealizations(Toggle):
-    """
-    If 'true', Realizations will be shuffled between the Floors.
-    """
-
-    display_name = "Shuffle Realizations"
-    default = True
-
-
-
-class CustomLORAPSeed(FreeText):
-    """
-    Optional custom seed for LORAP-specific generation.
-
-    Leave empty to use Archipelago's normal per-slot random seed.
-    If set, the same value with the same options will reproduce the same LORAP battle tree, book requirements, floor shuffle and client-side RNG seed.
-    """
-
-    display_name = "Custom LORAP Seed"
-    default = ""
-
+### PROGRESSION ###
 class ReceptionsRequireBooks(Toggle):
     """
     If 'true', every reception will require books to send invitation.
@@ -229,6 +212,22 @@ class FloorsRequireBooks(Toggle):
     """
     
     display_name = "Floors Require Books"
+    default = True
+
+class ShuffleAbnos(Toggle):
+    """
+    If 'true', Abnormalities will be shuffled between the floors.
+    """
+
+    display_name = "Shuffle Abnormalities"
+    default = True
+
+class ShuffleRealizations(Toggle):
+    """
+    If 'true', Realizations will be shuffled between the Floors.
+    """
+
+    display_name = "Shuffle Realizations"
     default = True
 
 class EnemiesTurnIntoChecks(Toggle):
@@ -291,6 +290,8 @@ class StartingPassiveLimitsItems(Range):
 
 class EmotionLimitsItems(Range):
     """
+    !!!NOT IMPLEMENTED!!! TODO
+
     Select the amount of "Emotion Limits Break" Items you'll be able to acquire in total.
     You always start with 0 Items (Unless configured otherwise) and your max Emotion Level increases by 1 for each Item.
     These Items determine the Maximum Emotion Level your librarians can get during receptions.
@@ -308,6 +309,8 @@ class EmotionLimitsItems(Range):
 
 class StartingEmotionLimitsItems(Range):
     """
+    !!!NOT IMPLEMENTED!!! TODO
+
     Select the amount of "Emotion Limits Break" Items you are starting with.
     """
     display_name = "Starting Passive Limits Break Items"
@@ -317,6 +320,8 @@ class StartingEmotionLimitsItems(Range):
 
 class ExclusivenessRemove(Choice):
     """
+    !!!NOT IMPLEMENTED!!! TODO
+
     Select if "Combat Page Exclusiveness Removal" item should be added to the pool.
 
     I think option names are self explanatory?
@@ -451,6 +456,7 @@ class LOROptions(PerGameCommonOptions):
     endgoals: Endgoals
     ensemble_battles: EnsembleBattles
     # Randomization
+    custom_lorap_seed: CustomLORAPSeed
     abno_page_shuffle: AbnoPageShuffle
     abno_page_randomization: AbnoPageRandomization
     exodia_guaratnee: ExodiaGuarantee
@@ -460,7 +466,6 @@ class LOROptions(PerGameCommonOptions):
     book_contents_randomization: BookContentsRandomization
     balance_book_requirements: BalanceBookRequirements
     book_requirement_density: BookRequirementDensity
-    custom_lorap_seed: CustomLORAPSeed
     # Progression
     receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
