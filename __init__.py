@@ -406,6 +406,9 @@ class LORWorld(World):
             "enemies_turn_into_checks",
             "balance_book_requirements",
             "book_requirement_density",
+            "deathlink",
+            "outgoing_deathlink",
+            "incoming_deathlink",
         )
         slot_data["randomize_reception_tree"] = 1
         slot_data["lorap_client_seed"] = self.client_seed

@@ -480,3 +480,6 @@ class LOROptions(PerGameCommonOptions):
     traps: Traps
     traps_severeness: TrapsSevereness
     # Other
+    deathlink: Deathlink
+    outgoing_deathlink: OutgoingDeathlink
+    incoming_deathlink: IncomingDeathlink
