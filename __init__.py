@@ -405,6 +405,7 @@ class LORWorld(World):
             "book_contents_randomization",
             "shuffle_ensemble_floor",
             "enemies_turn_into_checks",
+            "endgoals_always_unlocked",
             "balance_book_requirements",
             "book_requirement_density",
             "deathlink",

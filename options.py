@@ -247,6 +247,15 @@ class EnemiesTurnIntoChecks(Toggle):
     display_name = "Enemies Turn Into Checks"
     default = True
 
+class EndgoalsAlwaysUnlocked(Toggle):
+    """
+    If 'true', you won't have to complete Oliver's reception is order to access endgoal receptions
+    (Black Silence, Ensemble & Distorted Ensemble)
+    """
+
+    display_name = "Endgoals Always Unlocked"
+    default = False
+
 ### ITEMS###
 class PassivePointsItems(Range):
     """
@@ -480,6 +489,7 @@ class LOROptions(PerGameCommonOptions):
     receptions_require_books: ReceptionsRequireBooks
     floors_require_books: FloorsRequireBooks
     enemies_turn_into_checks: EnemiesTurnIntoChecks
+    endgoals_always_unlocked: EndgoalsAlwaysUnlocked
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems
