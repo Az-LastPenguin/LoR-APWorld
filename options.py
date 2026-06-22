@@ -193,6 +193,29 @@ class BookRequirementDensity(Range):
     range_end = 100
     default = 50
 
+class ShuffleAbnos(Toggle):
+    """
+    If 'true', Abnormalities will be shuffled between the floors.
+    """
+
+    display_name = "Shuffle Abnormalities"
+    default = True
+
+class ShuffleRealizations(Toggle):
+    """
+    If 'true', Realizations will be shuffled between the Floors.
+    """
+
+    display_name = "Shuffle Realizations"
+    default = True
+
+class ShuffleReverbEnsembleFloors(Toggle):
+    """
+    If true, floors for each reception of Reverberation Ensemble will be shuffled.
+    """
+    display_name = "Shuffle Reverb Ensemble Floors"
+    default = True
+
 ### PROGRESSION ###
 class ReceptionsRequireBooks(Toggle):
     """
@@ -212,22 +235,6 @@ class FloorsRequireBooks(Toggle):
     """
     
     display_name = "Floors Require Books"
-    default = True
-
-class ShuffleAbnos(Toggle):
-    """
-    If 'true', Abnormalities will be shuffled between the floors.
-    """
-
-    display_name = "Shuffle Abnormalities"
-    default = True
-
-class ShuffleRealizations(Toggle):
-    """
-    If 'true', Realizations will be shuffled between the Floors.
-    """
-
-    display_name = "Shuffle Realizations"
     default = True
 
 class EnemiesTurnIntoChecks(Toggle):
@@ -466,10 +473,11 @@ class LOROptions(PerGameCommonOptions):
     book_contents_randomization: BookContentsRandomization
     balance_book_requirements: BalanceBookRequirements
     book_requirement_density: BookRequirementDensity
-    # Progression
-    receptions_require_books: ReceptionsRequireBooks
     shuffle_abnos: ShuffleAbnos
     shuffle_realizations: ShuffleRealizations
+    shuffle_ensemble_floor: ShuffleReverbEnsembleFloors
+    # Progression
+    receptions_require_books: ReceptionsRequireBooks
     floors_require_books: FloorsRequireBooks
     enemies_turn_into_checks: EnemiesTurnIntoChecks
     # Items

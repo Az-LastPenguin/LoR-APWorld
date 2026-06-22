@@ -403,6 +403,7 @@ class LORWorld(World):
             "floors_require_books",
             "randomize_black_silence_page",
             "book_contents_randomization",
+            "shuffle_ensemble_floor",
             "enemies_turn_into_checks",
             "balance_book_requirements",
             "book_requirement_density",
