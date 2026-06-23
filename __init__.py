@@ -78,9 +78,7 @@ class LORWorld(World):
         for node in endgoal_receptions:
             if 70001 <= node.id <= 70010:
                 if "Reverberation Ensemble" in selected_goals:
-                    ensemble_limit = int(self.options.ensemble_battles.value)
-                    if len([n for n in selected_nodes if 70001 <= n.id <= 70010]) < ensemble_limit:
-                        selected_nodes.append(node)
+                    selected_nodes.append(node)
                 continue
 
             if node.id == 60003 and "Black Silence" in selected_goals:
