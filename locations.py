@@ -306,11 +306,15 @@ def _make_sphere_layers(
     first: ProgressionNode,
     ordinary: list[ProgressionNode],
     last: ProgressionNode,
+    boe_spheres_mode: bool,
 ) -> list[list[list[ProgressionNode]]]:
     spheres: list[list[list[ProgressionNode]]] = []
     for sphere in range(1, 8):
         nodes = [node for node in ordinary if node.sphere == sphere]
-        nodes.sort(key=lambda node: _node_sort_key(rng, node))
+        if boe_spheres_mode:
+            rng.shuffle(nodes)
+        else:
+            nodes.sort(key=lambda node: _node_sort_key(rng, node))
 
         fixed_start = [first] if sphere == 1 else []
         fixed_end = [last] if sphere == 7 else []
@@ -482,7 +486,7 @@ def build_mixed_battle_graph(
     _assign_spheres(rng, ordinary)
     first.sphere = 1
     last.sphere = 7
-    spheres = _make_sphere_layers(rng, first, ordinary, last)
+    spheres = _make_sphere_layers(rng, first, ordinary, last, _option_value(options, "progression_mode", 0) == 1)
     edges, transition_edges = _build_layered_edges(rng, spheres, shortcut_connections)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
