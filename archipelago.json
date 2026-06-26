@@ -1,6 +1,8 @@
 {
+  "version": 7,
+  "compatible_version": 7,
   "game": "Library of Ruina",
   "authors": ["LastPenguin"],
-  "minimum_ap_version": "0.6.5",
+  "minimum_ap_version": "0.6.7",
   "world_version": "1.0.0"
 }
