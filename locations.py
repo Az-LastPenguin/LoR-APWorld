@@ -480,13 +480,14 @@ def build_mixed_battle_graph(
     tree: ReceptionTree,
     floors: list[Floor],
     shortcut_connections: bool,
+    boe_spheres_mode: bool,
 ) -> tuple[list[ProgressionNode], list[tuple[str, str]], set[tuple[str, str]], dict[int, int]]:
     first, ordinary, last = _make_progression_nodes(tree, floors)
     _assign_progression_weights(rng, ordinary)
     _assign_spheres(rng, ordinary)
     first.sphere = 1
     last.sphere = 7
-    spheres = _make_sphere_layers(rng, first, ordinary, last, _option_value(options, "progression_mode", 0) == 1)
+    spheres = _make_sphere_layers(rng, first, ordinary, last, boe_spheres_mode)
     edges, transition_edges = _build_layered_edges(rng, spheres, shortcut_connections)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
@@ -761,6 +762,7 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
                 tree,
                 floors,
                 _option_enabled(options, "shortcut_connections"),
+                _option_value(options, "progression_mode", 0) == 1,
             )
             used_book_requirements = assign_archipelago_book_requirements(rng, progression_nodes, progression_edges, options)
 
