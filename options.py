@@ -317,9 +317,9 @@ class EmotionLimitsItems(Range):
     1. You get an abno page at every team emotion level like in vanilla game, but instead of getting only certain level abno pages
         at certain team emotion levels, the pool of pages contains every page which level is less than or equal to the current
         team emotion level (So you start getting level 3 pages at team emotion level 3 and can get them every level after that)
-    2. The amount of Max Light gotten is adjusted, you get 1 Max Light every level until level 6,
-        then you get 1 Max Light every even level until level 11 (You get 1 Max Light at 11),
-        and then you get 1 Max Light every third level with no cap (so at levels 14, 17, 20, etc.)
+    2. The amount of Max Light gotten is adjusted: you get 1 Max Light every level 1-5,
+        then you get 1 Max Light for every second level for levels 5-15 (so at levels 7, 9, 11, 13, 15),
+        then you get 1 Max Light for every third level for levels 15-30 (so at levels 18, 21, 24, 27, 30);
     3. You get an additional Speed Die every 4th level (so at levels 4, 8, 12, etc.)
     4. There is no additional page draw after the one at level 5.
     5. You CAN stack up to 15 abno pages on a single unit.
@@ -346,7 +346,7 @@ class ExclusivenessRemove(Choice):
 
     I think option names are self explanatory?
     """
-    display_name = "Combat Page Exclusiveness Remova"
+    display_name = "Combat Page Exclusiveness Removal"
     option_dontadd = 0
     option_item = 1
     option_remove = 2
