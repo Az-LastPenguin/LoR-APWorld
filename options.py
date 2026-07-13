@@ -87,7 +87,7 @@ class AbnoPageShuffle(Choice):
     Pages - Pages are shuffled between floors idividually.
     """
 
-    display_name = "Abnormality Page Shuffle"
+    display_name = "Shuffle Abnormality Pages"
     option_none = 0
     option_infloor = 1
     option_sets = 2
@@ -103,7 +103,7 @@ class AbnoPageRandomization(Choice):
     Unbound - Every stat is randomized, without restrictions.
     """
 
-    display_name = "Abnormality Page Randomization"
+    display_name = "Randomize Abnormality Pages"
     option_none = 0
     option_guarantee = 1
     option_unbound = 2
@@ -126,7 +126,7 @@ class EGOPageShuffle(Toggle):
     Select if EGO Pages should be shuffled between floors.
     """
     
-    display_name = "EGO Page Shuffle"
+    display_name = "Shuffle EGO Pages"
     default = True
 
 class PageRandomization(Choice):
@@ -141,7 +141,7 @@ class PageRandomization(Choice):
     Havoc - Above and: Combat Pages' VFX and SFX, Key Pages' visuals.
     """
 
-    display_name = "Key/Combat Page Randomization"
+    display_name = "Randomize Key/Combat Pages"
     option_none = 0
     option_basic = 1
     option_more = 2
@@ -165,7 +165,7 @@ class BookContentsRandomization(Choice):
     StageChapter - Book contents will be balanced around the chapter of the reception/suppression/realization they're required in.
     Chaotic - Book contents are fully random.
     """
-    display_name = "Book Contents Randomization"
+    display_name = "Randomize Book Contents"
     option_bookchapter = 0
     option_stagechapter = 1
     option_chaotic = 2
@@ -213,7 +213,7 @@ class ShuffleReverbEnsembleFloors(Toggle):
     """
     If true, floors for each reception of Reverberation Ensemble will be shuffled.
     """
-    display_name = "Shuffle Reverb Ensemble Floors"
+    display_name = "Shuffle Ensemble Floors"
     default = True
 
 ### PROGRESSION ###
@@ -306,32 +306,36 @@ class StartingPassiveLimitsItems(Range):
 
 class EmotionLimitsItems(Range):
     """
-    !!!NOT IMPLEMENTED!!! TODO
-
     Select the amount of "Emotion Limits Break" Items you'll be able to acquire in total.
     You always start with 0 Items (Unless configured otherwise) and your max Emotion Level increases by 1 for each Item.
     These Items determine the Maximum Emotion Level your librarians can get during receptions.
-    Levels past 5 (Vanilla max) give additional small buffs like +1 Light, Page Draw & accasionally a Speed Die.
+    Levels past 5 (Vanilla max) give additional buffs like +1 Max Light, Abno and EGO pages & accasionally a Speed Die.
     That also means that you won't be getting Abno and EGO Pages even if you have them unless your Max Emotion Level is atleast 1 and 3 respectively.
-    Base amount is 10 Items, meaning up to 10 Max Emotion Level in-game.
+    Base amount is 15 Items, meaning up to 15 Max Emotion Level in-game.
 
-    Do Note that adding more of those Items leads to having less free space in the Item Pool,
-    potentially lowering the amount of other filler items you'll be able to get.
+    Emotion level effects a changed a bit in this mod:
+    1. You get an abno page at every team emotion level like in vanilla game, but instead of getting only certain level abno pages
+        at certain team emotion levels, the pool of pages contains every page which level is less than or equal to the current
+        team emotion level (So you start getting level 3 pages at team emotion level 3 and can get them every level after that)
+    2. The amount of Max Light gotten is adjusted, you get 1 Max Light every level until level 6,
+        then you get 1 Max Light every even level until level 11 (You get 1 Max Light at 11),
+        and then you get 1 Max Light every third level with no cap (so at levels 14, 17, 20, etc.)
+    3. You get an additional Speed Die every 4th level (so at levels 4, 8, 12, etc.)
+    4. There is no additional page draw after the one at level 5.
+    5. You CAN stack up to 15 abno pages on a single unit.
     """
     display_name = "Passive Limits Break Items"
     range_start = 0
-    range_end = 100
-    default = 10
+    range_end = 15
+    default = 15
 
 class StartingEmotionLimitsItems(Range):
     """
-    !!!NOT IMPLEMENTED!!! TODO
-
     Select the amount of "Emotion Limits Break" Items you are starting with.
     """
     display_name = "Starting Passive Limits Break Items"
     range_start = 0
-    range_end = 100
+    range_end = 15
     default = 0
 
 class ExclusivenessRemove(Choice):
@@ -475,7 +479,7 @@ class LOROptions(PerGameCommonOptions):
     custom_lorap_seed: CustomLORAPSeed
     abno_page_shuffle: AbnoPageShuffle
     abno_page_randomization: AbnoPageRandomization
-    exodia_guaratnee: ExodiaGuarantee
+    exodia_guarantee: ExodiaGuarantee
     ego_page_shuffle: EGOPageShuffle
     page_randomization: PageRandomization
     randomize_black_silence_page: RandomizeBlackSilencePage

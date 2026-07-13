@@ -393,13 +393,13 @@ class LORWorld(World):
             "ensemble_battles",
             "abno_page_shuffle",
             "abno_page_randomization",
-            "exodia_guaratnee",
+            "exodia_guarantee",
             "ego_page_shuffle",
-            "receptions_require_books",
+            #"receptions_require_books",
             "shuffle_abnos",
             "shuffle_realizations",
-            "floors_require_books",
-            "randomize_black_silence_page",
+            #"floors_require_books",
+            # "randomize_black_silence_page",
             "book_contents_randomization",
             "shuffle_ensemble_floor",
             "enemies_turn_into_checks",
@@ -410,9 +410,9 @@ class LORWorld(World):
             "outgoing_deathlink",
             "incoming_deathlink",
         )
-        slot_data["randomize_reception_tree"] = 1
+        # slot_data["randomize_reception_tree"] = 1
         slot_data["lorap_client_seed"] = self.client_seed
-        slot_data["effective_lorap_seed"] = self.effective_lorap_seed
+        # slot_data["effective_lorap_seed"] = self.effective_lorap_seed
 
         slot_data["reception_book_requirements"] = {
             node.id: node.req_books for node in self.reception_tree.reception_nodes
