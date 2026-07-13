@@ -33,6 +33,8 @@ class ProgressionNode:
     order_index: int = 0
     backbone: bool = False
     branch_side: int = 0
+    sphere: int = 0
+    sphere_layer: int = 0
     #visual_x: int = 0 #float = 0.0
     #visual_y: int = 0 #float = 0.0
 
@@ -72,6 +74,8 @@ class LORSetupResult:
     floors: list[Floor]
     progression_nodes: list[ProgressionNode]
     progression_edges: list[tuple[str, str]]
+    transition_edges: set[tuple[str, str]]
+    shortcut_connections: bool
     abno_stage_chapters: dict[int, int]
     used_book_requirements: set[int]
 
@@ -138,26 +142,12 @@ def _outgoing_count(edges: list[tuple[str, str]], key: str) -> int:
     return sum(1 for source, _ in edges if source == key)
 
 
-def _max_forward_chapter_jump(source: ProgressionNode) -> int:
-    return 1 if source.chapter <= 2 else 2
-
-
-def _can_connect_chapters(source: ProgressionNode, target: ProgressionNode) -> bool:
-    if target.chapter >= source.chapter:
-        return target.chapter - source.chapter <= _max_forward_chapter_jump(source)
-    return source.chapter - target.chapter <= 1
-
-
 def _add_edge(edges: list[tuple[str, str]], source: ProgressionNode, target: ProgressionNode) -> bool:
     if source.key == target.key:
-        return False
-    if not _can_connect_chapters(source, target):
         return False
     edge = (source.key, target.key)
     if edge in edges:
         return True
-    if _outgoing_count(edges, source.key) >= max(1, source.source.checks):
-        return False
     edges.append(edge)
     return True
 
@@ -215,142 +205,197 @@ def _path_exists(
     return False
 
 
-def _remove_transitive_edges(edges: list[tuple[str, str]], protected_target: str) -> list[tuple[str, str]]:
+def _remove_transitive_edges(edges: list[tuple[str, str]]) -> list[tuple[str, str]]:
     reduced = list(edges)
     for edge in list(edges):
-        if edge[1] == protected_target:
-            continue
         if _path_exists(reduced, edge[0], edge[1], ignored_edge=edge):
             reduced.remove(edge)
     return reduced
 
 
-def _pick_forward_target(
-    rng: random.Random,
-    ordered: list[ProgressionNode],
-    source_index: int,
-    minimum_jump: int,
-    maximum_jump: int,
-    fallback: ProgressionNode,
-) -> ProgressionNode:
-    start = min(len(ordered) - 1, source_index + minimum_jump)
-    end = min(len(ordered) - 1, source_index + maximum_jump)
-    if start > end:
-        return fallback
-    return ordered[rng.randint(start, end)]
+def _assign_spheres(rng: random.Random, ordinary: list[ProgressionNode]) -> None:
+    for node in ordinary:
+        candidates = [sphere for sphere in (node.chapter - 1, node.chapter, node.chapter + 1) if 1 <= sphere <= 7]
+        weights = [80 if sphere == node.chapter else 10 for sphere in candidates]
+        node.sphere = rng.choices(candidates, weights=weights, k=1)[0]
+
+    sphere_counts = {
+        sphere: sum(node.sphere == sphere for node in ordinary)
+        for sphere in range(1, 8)
+    }
+    for sphere in range(1, 8):
+        while sphere_counts[sphere] < 2:
+            candidates = [
+                node for node in ordinary
+                if node.sphere != sphere
+                and sphere_counts[node.sphere] > 2
+                and abs(node.chapter - sphere) <= 1
+            ]
+            if not candidates:
+                raise Exception(f"LORAP could not populate sphere {sphere}")
+            moved = min(candidates, key=lambda node: (abs(node.chapter - sphere), node.progression_weight))
+            sphere_counts[moved.sphere] -= 1
+            moved.sphere = sphere
+            sphere_counts[sphere] += 1
 
 
-
-def _pick_starter_node(ordinary: list[ProgressionNode]) -> ProgressionNode:
-    candidates = [
-        node for node in ordinary
-        if node.kind == "reception" and node.chapter <= 2 and node.req_librarians <= 1
-    ]
-    if not candidates:
-        candidates = [node for node in ordinary if node.kind == "reception" and node.req_librarians <= 1]
-    if not candidates:
-        candidates = ordinary
-    return min(candidates, key=lambda node: (node.progression_weight, node.chapter, node.id))
-
-
-def _valid_source_candidates(
-    edges: list[tuple[str, str]],
-    connected: list[ProgressionNode],
-    target: ProgressionNode,
-) -> list[ProgressionNode]:
-    return [
-        source for source in connected
-        if source.progression_weight < target.progression_weight
-        and _can_connect_chapters(source, target)
-        and _outgoing_count(edges, source.key) < max(1, source.source.checks)
-    ]
-
-
-def _choose_edge_source(
-    rng: random.Random,
-    edges: list[tuple[str, str]],
-    connected: list[ProgressionNode],
-    target: ProgressionNode,
-) -> ProgressionNode | None:
-    candidates = _valid_source_candidates(edges, connected, target)
-    if not candidates:
-        return None
-
-    candidates.sort(key=lambda node: (
-        abs(node.progression_weight - target.progression_weight),
-        abs(node.chapter - target.chapter),
-        node.id,
-    ))
-    return rng.choice(candidates[:min(6, len(candidates))])
+def _sphere_width_profile(sphere: int, rng: random.Random) -> tuple[int, int, int]:
+    target_widths = {
+        1: rng.randint(3, 4),
+        2: rng.randint(4, 5),
+        3: rng.randint(5, 6),
+        4: rng.randint(6, 7),
+        5: rng.randint(7, 8),
+        6: rng.randint(7, 8),
+        7: rng.randint(3, 4),
+    }
+    edge_caps = {
+        1: 3,
+        2: 4,
+        3: 5,
+        4: 5,
+        5: 6,
+        6: 6,
+        7: 3,
+    }
+    middle_caps = {
+        1: 4,
+        2: 5,
+        3: 6,
+        4: 7,
+        5: 8,
+        6: 8,
+        7: 5,
+    }
+    return target_widths[sphere], edge_caps[sphere], middle_caps[sphere]
 
 
-def _build_branchy_edges(rng: random.Random, first: ProgressionNode, ordinary: list[ProgressionNode], last: ProgressionNode) -> list[tuple[str, str]]:
-    edges: list[tuple[str, str]] = []
-    if not ordinary:
-        if not _add_edge(edges, first, last):
-            raise Exception(f"LORAP could not create edge {first.key} -> {last.key}")
-        return edges
+def _layer_widths(rng: random.Random, sphere: int, node_count: int) -> list[int]:
+    if node_count < 2:
+        raise Exception("LORAP sphere does not have enough nodes for a layered graph")
 
-    starter = _pick_starter_node(ordinary)
-    remaining = [node for node in ordinary if node is not starter]
-    if not _add_edge(edges, first, starter):
-        raise Exception(f"LORAP could not create starter edge {first.key} -> {starter.key}")
+    target_width, edge_cap, middle_cap = _sphere_width_profile(sphere, rng)
+    layer_count = (node_count + target_width - 1) // target_width
+    layer_count = max(1, min(layer_count, node_count // 2))
+    while edge_cap * min(layer_count, 2) + middle_cap * max(0, layer_count - 2) < node_count:
+        layer_count += 1
+    if layer_count > node_count // 2:
+        raise Exception(f"LORAP could not split {node_count} nodes into non-singleton layers")
 
-    lanes_count = min(rng.randint(3, 5), max(2, starter.source.checks))
-    for index, node in enumerate(sorted(remaining, key=lambda node: node.progression_weight)):
-        lane_index = min(lanes_count - 1, int(index * lanes_count / max(1, len(remaining))))
-        lane_index = max(0, min(lanes_count - 1, lane_index + rng.choice([-1, 0, 0, 1])))
-        node.branch_side = lane_index - (lanes_count // 2)
+    widths = [2] * layer_count
+    remaining = node_count - sum(widths)
+    center_order = sorted(range(layer_count), key=lambda index: (abs(index - (layer_count - 1) / 2), rng.random()))
 
-    connected: list[ProgressionNode] = [starter]
-    pending = sorted(remaining, key=lambda node: (node.progression_weight, node.chapter, node.id))
-
-    while pending:
-        connectable = [node for node in pending if _valid_source_candidates(edges, connected, node)]
-        if not connectable:
-            sample = ", ".join(f"{node.key}:ch{node.chapter}" for node in pending[:8])
-            raise Exception(f"LORAP could not connect pending nodes within chapter jump limits: {sample}")
-
-        connectable.sort(key=lambda node: (node.progression_weight, rng.random(), node.id))
-        target = rng.choice(connectable[:min(4, len(connectable))])
-        source = _choose_edge_source(rng, edges, connected, target)
-        if source is None or not _add_edge(edges, source, target):
-            raise Exception(f"LORAP could not create branchy edge into {target.key}")
-
-        connected.append(target)
-        pending.remove(target)
-
-    last_sources = _valid_source_candidates(edges, connected, last)
-    if not last_sources:
-        raise Exception("LORAP could not connect Oliver within chapter jump limits")
-
-    last_sources.sort(key=lambda node: (abs(node.chapter - last.chapter), abs(node.progression_weight - last.progression_weight), node.id))
-    if not _add_edge(edges, last_sources[0], last):
-        raise Exception(f"LORAP could not create final edge {last_sources[0].key} -> {last.key}")
-
-    ordered = sorted(connected[1:], key=lambda node: node.progression_weight)
-    for index, source in enumerate(ordered):
-        if rng.random() > 0.20:
-            continue
-        if _outgoing_count(edges, source.key) >= max(1, source.source.checks):
-            continue
-
-        possible_targets = [
-            target for target in ordered[index + 2:] + [last]
-            if target.progression_weight > source.progression_weight
-            and _can_connect_chapters(source, target)
+    while remaining:
+        candidates = [
+            index for index in center_order
+            if widths[index] < (edge_cap if index in (0, layer_count - 1) else middle_cap)
         ]
-        if not possible_targets:
-            continue
+        if not candidates:
+            raise Exception(f"LORAP could not fit {node_count} nodes into sphere layers")
+        for index in candidates:
+            if remaining == 0:
+                break
+            widths[index] += 1
+            remaining -= 1
+    return widths
 
-        possible_targets.sort(key=lambda node: (
-            abs(node.progression_weight - source.progression_weight),
-            abs(node.chapter - source.chapter),
-            node.id,
-        ))
-        _add_edge(edges, source, rng.choice(possible_targets[:min(10, len(possible_targets))]))
 
-    return edges
+def _make_sphere_layers(
+    rng: random.Random,
+    first: ProgressionNode,
+    ordinary: list[ProgressionNode],
+    last: ProgressionNode,
+    boe_spheres_mode: bool,
+) -> list[list[list[ProgressionNode]]]:
+    spheres: list[list[list[ProgressionNode]]] = []
+    for sphere in range(1, 8):
+        nodes = [node for node in ordinary if node.sphere == sphere]
+        if boe_spheres_mode:
+            rng.shuffle(nodes)
+        else:
+            nodes.sort(key=lambda node: _node_sort_key(rng, node))
+
+        fixed_start = [first] if sphere == 1 else []
+        fixed_end = [last] if sphere == 7 else []
+        widths = _layer_widths(rng, sphere, len(nodes))
+        layers: list[list[ProgressionNode]] = []
+        if fixed_start:
+            layers.append(fixed_start)
+        offset = 0
+        for width in widths:
+            layer = nodes[offset:offset + width]
+            rng.shuffle(layer)
+            layers.append(layer)
+            offset += width
+        if fixed_end:
+            layers.append(fixed_end)
+
+        for layer_index, layer in enumerate(layers):
+            for node in layer:
+                node.sphere = sphere
+                node.sphere_layer = layer_index
+                node.progression_weight = sphere * 1000.0 + layer_index * 10.0 + rng.random()
+        spheres.append(layers)
+    return spheres
+
+
+def _connect_adjacent_layers(
+    rng: random.Random,
+    edges: list[tuple[str, str]],
+    sources: list[ProgressionNode],
+    targets: list[ProgressionNode],
+) -> None:
+    shuffled_sources = list(sources)
+    shuffled_targets = list(targets)
+    rng.shuffle(shuffled_sources)
+    rng.shuffle(shuffled_targets)
+
+    for index, target in enumerate(shuffled_targets):
+        _add_edge(edges, shuffled_sources[index % len(shuffled_sources)], target)
+    for index, source in enumerate(shuffled_sources):
+        if _outgoing_count(edges, source.key) == 0:
+            _add_edge(edges, source, shuffled_targets[index % len(shuffled_targets)])
+
+    for source in shuffled_sources:
+        if rng.random() < 0.35:
+            _add_edge(edges, source, rng.choice(shuffled_targets))
+
+
+def _build_layered_edges(
+    rng: random.Random,
+    spheres: list[list[list[ProgressionNode]]],
+    shortcut_connections: bool,
+) -> tuple[list[tuple[str, str]], set[tuple[str, str]]]:
+    edges: list[tuple[str, str]] = []
+    transition_edges: set[tuple[str, str]] = set()
+
+    for layers in spheres:
+        for layer_index in range(len(layers) - 1):
+            _connect_adjacent_layers(rng, edges, layers[layer_index], layers[layer_index + 1])
+
+    for sphere_index in range(6):
+        before = len(edges)
+        _connect_adjacent_layers(rng, edges, spheres[sphere_index][-1], spheres[sphere_index + 1][0])
+        transition_edges.update(edges[before:])
+
+    if shortcut_connections:
+        for layers in spheres:
+            for layer_index, layer in enumerate(layers[:-2]):
+                if rng.random() > 0.65:
+                    continue
+                jump = rng.choice([2, 2, 3])
+                if layer_index + jump >= len(layers):
+                    continue
+                source = rng.choice(layer)
+                candidates = [
+                    target for target in layers[layer_index + jump]
+                    if not _path_exists(edges, source.key, target.key)
+                ]
+                if candidates:
+                    _add_edge(edges, source, rng.choice(candidates))
+
+    return _remove_transitive_edges(edges), transition_edges
 
 #def _assign_visual_layout(
 #    rng: random.Random,
@@ -434,21 +479,22 @@ def build_mixed_battle_graph(
     rng: random.Random,
     tree: ReceptionTree,
     floors: list[Floor],
-) -> tuple[list[ProgressionNode], list[tuple[str, str]], dict[int, int]]:
+    shortcut_connections: bool,
+    boe_spheres_mode: bool,
+) -> tuple[list[ProgressionNode], list[tuple[str, str]], set[tuple[str, str]], dict[int, int]]:
     first, ordinary, last = _make_progression_nodes(tree, floors)
     _assign_progression_weights(rng, ordinary)
-    first.progression_weight = -1000.0
-    last.progression_weight = 1000.0
-    ordinary.sort(key=lambda node: _node_sort_key(rng, node))
-
-    edges = _build_branchy_edges(rng, first, ordinary, last)
-    edges = _remove_transitive_edges(edges, last.key)
+    _assign_spheres(rng, ordinary)
+    first.sphere = 1
+    last.sphere = 7
+    spheres = _make_sphere_layers(rng, first, ordinary, last, boe_spheres_mode)
+    edges, transition_edges = _build_layered_edges(rng, spheres, shortcut_connections)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
     ordered = _topological_order(nodes_by_key, edges)
     # _assign_visual_layout(rng, ordered, edges, first, last, branchy=True)
     stage_chapters = {node.id: node.chapter for node in ordered if node.kind == "stage"}
-    return ordered, edges, stage_chapters
+    return ordered, edges, transition_edges, stage_chapters
 
 
 def assign_archipelago_book_requirements(
@@ -464,7 +510,7 @@ def assign_archipelago_book_requirements(
 
     used_books: set[int] = set()
     max_index = max(1, len(progression_nodes) - 1)
-    bootstrap_count = 2
+    bootstrap_count = 4
     bootstrap_keys = {node.key for node in progression_nodes[:bootstrap_count]}
 
     def accepts_books(node: ProgressionNode) -> bool:
@@ -567,15 +613,51 @@ def validate_setup_result(result: LORSetupResult) -> None:
     outgoing: dict[str, list[str]] = {key: [] for key in nodes_by_key}
     indegree: dict[str, int] = {key: 0 for key in nodes_by_key}
 
+    layers_by_sphere: dict[int, dict[int, list[ProgressionNode]]] = {
+        sphere: {} for sphere in range(1, 8)
+    }
+    for node in result.progression_nodes:
+        if node.sphere not in layers_by_sphere:
+            raise Exception(f"LORAP node has an invalid sphere: {node.key} -> {node.sphere}")
+        if abs(node.chapter - node.sphere) > 1:
+            raise Exception(f"LORAP node is too far from its vanilla chapter: {node.key}")
+        layers_by_sphere[node.sphere].setdefault(node.sphere_layer, []).append(node)
+
+    for sphere, layers in layers_by_sphere.items():
+        if not layers:
+            raise Exception(f"LORAP sphere {sphere} is empty")
+        expected_layers = set(range(max(layers) + 1))
+        if set(layers) != expected_layers:
+            raise Exception(f"LORAP sphere {sphere} has a gap in its layers")
+        for layer_index, layer in layers.items():
+            is_rats_layer = sphere == 1 and layer_index == 0
+            is_oliver_layer = sphere == 7 and layer_index == max(layers)
+            if len(layer) < 2 and not (is_rats_layer or is_oliver_layer):
+                raise Exception(f"LORAP sphere {sphere} has a singleton layer {layer_index}")
+
     for source, target in result.progression_edges:
         if source == target:
             raise Exception(f"LORAP graph has a self-cycle on {source}")
         if source not in nodes_by_key or target not in nodes_by_key:
             raise Exception(f"LORAP graph edge references an unknown node: {source} -> {target}")
-        if nodes_by_key[target].progression_weight <= nodes_by_key[source].progression_weight and target != f"reception:{result.tree.last_reception}":
+        source_node = nodes_by_key[source]
+        target_node = nodes_by_key[target]
+        if target_node.progression_weight <= source_node.progression_weight:
             raise Exception(f"LORAP graph has a backwards edge: {source} -> {target}")
-        if not _can_connect_chapters(nodes_by_key[source], nodes_by_key[target]):
-            raise Exception(f"LORAP graph has an invalid chapter jump: {source} -> {target}")
+        if target_node.sphere == source_node.sphere:
+            layer_jump = target_node.sphere_layer - source_node.sphere_layer
+            if layer_jump < 1 or layer_jump > 3 or (not result.shortcut_connections and layer_jump != 1):
+                raise Exception(f"LORAP graph has an invalid layer edge: {source} -> {target}")
+            if (source, target) in result.transition_edges:
+                raise Exception(f"LORAP internal edge is marked as a transition: {source} -> {target}")
+        else:
+            if target_node.sphere != source_node.sphere + 1:
+                raise Exception(f"LORAP graph skips a sphere: {source} -> {target}")
+            source_last_layer = max(layers_by_sphere[source_node.sphere])
+            if source_node.sphere_layer != source_last_layer or target_node.sphere_layer != 0:
+                raise Exception(f"LORAP transition does not connect sphere boundaries: {source} -> {target}")
+            if (source, target) not in result.transition_edges:
+                raise Exception(f"LORAP sphere edge is not marked as a transition: {source} -> {target}")
         outgoing[source].append(target)
         indegree[target] += 1
 
@@ -585,9 +667,23 @@ def validate_setup_result(result: LORSetupResult) -> None:
     if roots != [first_key]:
         raise Exception(f"LORAP graph must start only from Rats, got roots: {roots}")
 
-    first_children = outgoing[first_key]
-    if len(first_children) != 1:
-        raise Exception(f"LORAP Rats must have exactly one child, got {len(first_children)}: {first_children}")
+    if nodes_by_key[first_key].sphere != 1 or nodes_by_key[first_key].sphere_layer != 0:
+        raise Exception("LORAP Rats must start sphere 1")
+    last_sphere_layer = max(layers_by_sphere[7])
+    if nodes_by_key[last_key].sphere != 7 or nodes_by_key[last_key].sphere_layer != last_sphere_layer:
+        raise Exception("LORAP Oliver must end sphere 7")
+
+    unknown_transitions = result.transition_edges - set(result.progression_edges)
+    if unknown_transitions:
+        raise Exception(f"LORAP transition metadata references missing edges: {sorted(unknown_transitions)[:4]}")
+
+    for sphere in range(1, 7):
+        transitions = [
+            edge for edge in result.transition_edges
+            if nodes_by_key[edge[0]].sphere == sphere and nodes_by_key[edge[1]].sphere == sphere + 1
+        ]
+        if len(transitions) < 2:
+            raise Exception(f"LORAP sphere {sphere} has fewer than two exits")
 
     reached: set[str] = set()
     queue = deque([first_key])
@@ -604,9 +700,11 @@ def validate_setup_result(result: LORSetupResult) -> None:
     if last_key not in reached:
         raise Exception("LORAP Oliver is unreachable")
 
+    dead_ends = [key for key, targets in outgoing.items() if not targets and key != last_key]
+    if dead_ends:
+        raise Exception(f"LORAP graph has dead ends before Oliver: {dead_ends[:8]}")
+
     for edge in result.progression_edges:
-        if edge[1] == last_key:
-            continue
         if _path_exists(result.progression_edges, edge[0], edge[1], ignored_edge=edge):
             raise Exception(f"LORAP graph has a transitive edge: {edge[0]} -> {edge[1]}")
 
@@ -659,7 +757,13 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
             _reset_req_books(tree, floors)
             _shuffle_floor_content(rng, floors, options)
 
-            progression_nodes, progression_edges, abno_stage_chapters = build_mixed_battle_graph(rng, tree, floors)
+            progression_nodes, progression_edges, transition_edges, abno_stage_chapters = build_mixed_battle_graph(
+                rng,
+                tree,
+                floors,
+                _option_enabled(options, "shortcut_connections"),
+                _option_value(options, "progression_mode", 0) == 1,
+            )
             used_book_requirements = assign_archipelago_book_requirements(rng, progression_nodes, progression_edges, options)
 
             result = LORSetupResult(
@@ -667,6 +771,8 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
                 floors=floors,
                 progression_nodes=progression_nodes,
                 progression_edges=progression_edges,
+                transition_edges=transition_edges,
+                shortcut_connections=_option_enabled(options, "shortcut_connections"),
                 abno_stage_chapters=abno_stage_chapters,
                 used_book_requirements=used_book_requirements,
             )

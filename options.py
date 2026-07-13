@@ -193,6 +193,27 @@ class BookRequirementDensity(Range):
     range_end = 100
     default = 50
 
+class ShortcutConnections(Toggle):
+    """
+    If true, some battles in the same sphere may connect across multiple graph layers.
+    If false, connections only lead to the immediately following layer.
+    """
+
+    display_name = "Shortcut Connections"
+    default = True
+
+class ProgressionMode(Choice):
+    """
+    Book Requirements - Battles are gated by the battle graph and required books.
+    BoE Spheres - Battles still require books, but moving between spheres also
+                  uses sphere clear percentage and Book of Everything bundles.
+    """
+
+    display_name = "Progression Mode"
+    option_book_requirements = 0
+    option_boe_spheres = 1
+    default = 0
+
 class ShuffleAbnos(Toggle):
     """
     If 'true', Abnormalities will be shuffled between the floors.
@@ -255,6 +276,17 @@ class EndgoalsAlwaysUnlocked(Toggle):
 
     display_name = "Endgoals Always Unlocked"
     default = False
+
+class SphereClearPercentage(Range):
+    """
+    In BoE Spheres mode, controls how much of the current sphere must be
+    completed before battles in the next sphere can open.
+    """
+
+    display_name = "Sphere Clear Percentage"
+    range_start = 0
+    range_end = 100
+    default = 70
 
 ### ITEMS###
 class PassivePointsItems(Range):
@@ -469,31 +501,41 @@ class IncomingDeathlink(Choice):
 
 @dataclass
 class LOROptions(PerGameCommonOptions):
-    # Floor-Related
-    lock_floors: LockFloors
-    starting_floor: StartingFloor
-    # Endgoal-related
+    # Start and Goals
     endgoals: Endgoals
     ensemble_battles: EnsembleBattles
+    endgoals_always_unlocked: EndgoalsAlwaysUnlocked
+    lock_floors: LockFloors
+    starting_floor: StartingFloor
+
+    # Battle Graph and Progression
+    progression_mode: ProgressionMode
+    sphere_clear_percentage: SphereClearPercentage
+    receptions_require_books: ReceptionsRequireBooks
+    floors_require_books: FloorsRequireBooks
+    book_requirement_density: BookRequirementDensity
+    balance_book_requirements: BalanceBookRequirements
+    enemies_turn_into_checks: EnemiesTurnIntoChecks
+    shortcut_connections: ShortcutConnections
+    randomize_black_silence_page: RandomizeBlackSilencePage
+
     # Randomization
     custom_lorap_seed: CustomLORAPSeed
+    shuffle_abnos: ShuffleAbnos
+    shuffle_realizations: ShuffleRealizations
+    shuffle_ensemble_floor: ShuffleReverbEnsembleFloors
     abno_page_shuffle: AbnoPageShuffle
     abno_page_randomization: AbnoPageRandomization
     exodia_guarantee: ExodiaGuarantee
     ego_page_shuffle: EGOPageShuffle
     page_randomization: PageRandomization
-    randomize_black_silence_page: RandomizeBlackSilencePage
+
+    # Book Contents and Filler
     book_contents_randomization: BookContentsRandomization
-    balance_book_requirements: BalanceBookRequirements
-    book_requirement_density: BookRequirementDensity
-    shuffle_abnos: ShuffleAbnos
-    shuffle_realizations: ShuffleRealizations
-    shuffle_ensemble_floor: ShuffleReverbEnsembleFloors
-    # Progression
-    receptions_require_books: ReceptionsRequireBooks
-    floors_require_books: FloorsRequireBooks
-    enemies_turn_into_checks: EnemiesTurnIntoChecks
-    endgoals_always_unlocked: EndgoalsAlwaysUnlocked
+    filler_items: FillerItems
+    filler_pages: FillerPages
+    remove_exclusive: ExclusivenessRemove
+
     # Items
     passive_points_items: PassivePointsItems
     starting_passive_points_items: StartingPassivePointsItems
@@ -501,12 +543,12 @@ class LOROptions(PerGameCommonOptions):
     starting_passive_limits_items: StartingPassiveLimitsItems
     emotion_limits_items: EmotionLimitsItems
     starting_emotion_limits_items: StartingEmotionLimitsItems
-    remove_exclusive: ExclusivenessRemove
-    filler_items: FillerItems
-    filler_pages: FillerPages
+
+    # Traps
     traps: Traps
     traps_severeness: TrapsSevereness
-    # Other
+
+    # Death Link
     deathlink: Deathlink
     outgoing_deathlink: OutgoingDeathlink
     incoming_deathlink: IncomingDeathlink
