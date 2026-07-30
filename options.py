@@ -181,7 +181,7 @@ class BalanceBookRequirements(Toggle):
 
 class BookRequirementDensity(Range):
     """
-    Controls how many nodes in invitations menu will share same book requirment.
+    Controls how many nodes on the map will share same book requirment.
 
     At 100, every locked battle node receives its own book requirement.
     Lower values makes nearby nodes share the same requirements. At 1, nearly
@@ -216,7 +216,7 @@ class ProgressionMode(Choice):
 
 class ShuffleAbnos(Toggle):
     """
-    If 'true', Abnormalities will be shuffled between the floors.
+    If 'true', Abnormalities will be shuffled between the Floors.
     """
 
     display_name = "Shuffle Abnormalities"
@@ -241,8 +241,6 @@ class ShuffleReverbEnsembleFloors(Toggle):
 class ReceptionsRequireBooks(Toggle):
     """
     If 'true', every reception will require books to send invitation.
-    
-    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
     """
 
     display_name = "Receptions Require Books"
@@ -251,8 +249,6 @@ class ReceptionsRequireBooks(Toggle):
 class FloorsRequireBooks(Toggle):
     """
     If 'true', Abnormality Suppressions and Realizations will require books.
-
-    Turning this off majorly distorts (heh, get it?) intended progression and has high chance to BK you and/or others.
     """
     
     display_name = "Floors Require Books"
@@ -359,7 +355,7 @@ class EmotionLimitsItems(Range):
     display_name = "Passive Limits Break Items"
     range_start = 0
     range_end = 15
-    default = 15
+    default = 13
 
 class StartingEmotionLimitsItems(Range):
     """
@@ -368,7 +364,7 @@ class StartingEmotionLimitsItems(Range):
     display_name = "Starting Passive Limits Break Items"
     range_start = 0
     range_end = 15
-    default = 0
+    default = 2
 
 class ExclusivenessRemove(Choice):
     """
