@@ -9,7 +9,6 @@ from . import options as lor_options
 from .options import LOROptions
 from .items import LORItem, LORItemData, items_by_name, items_by_category, items_name_to_id
 from .locations import LORLocation, LORSetupResult, ProgressionNode, setup_locations, locations_name_to_id
-from .gamedata.receptions import endgoal_receptions
 from .gamedata.floors import Floor
 from .gamedata.books import books_dict, books
 from Options import OptionGroup
@@ -18,7 +17,10 @@ from worlds.generic.Rules import set_rule
 from BaseClasses import ItemClassification, Region, LocationProgressType
 
 
-BOE_BUNDLES_PER_SPHERE = (6, 6, 10, 11, 10, 20, 2)
+BOE_BUNDLES_PER_SPHERE = (6, 6, 10, 11, 10, 20, 7)
+BOE_POOL_MULTIPLIER = 2
+VANILLA_BOOK_LOGIC_MULTIPLIER = 2
+SLOT_DATA_VERSION = 3
 
 
 def _stable_seed_int(*parts: object) -> int:
@@ -31,6 +33,7 @@ class LORWebWorld(WebWorld):
     option_groups = [
         OptionGroup("Start and Goals", [
             lor_options.Endgoals,
+            lor_options.PersistentGoals,
             lor_options.EnsembleBattles,
             lor_options.EndgoalsAlwaysUnlocked,
             lor_options.LockFloors,
@@ -94,6 +97,9 @@ class LORWorld(World):
 
     item_name_to_id = items_name_to_id
     location_name_to_id = locations_name_to_id
+    item_name_groups = {
+        "Vanilla Books": {book.name for book in books},
+    }
 
     setup_result: LORSetupResult = None
     floors: list[Floor] = []
@@ -127,7 +133,7 @@ class LORWorld(World):
         option = getattr(self.options, option_name, default)
         return int(getattr(option, "value", option))
 
-    def _boe_spheres_enabled(self) -> bool:
+    def _boe_layers_enabled(self) -> bool:
         return self._option_value("progression_mode", 0) == 1
 
     def _boe_bundles_per_sphere(self) -> list[int]:
@@ -136,6 +142,15 @@ class LORWorld(World):
     def _boe_bundles_required_through_sphere(self, sphere: int) -> int:
         bundles = self._boe_bundles_per_sphere()
         return sum(bundles[:max(0, min(sphere, len(bundles)))])
+
+    def _actual_vanilla_books_required(self) -> int:
+        return max(0, self.setup_result.layer_count - 1)
+
+    def _actual_books_required_for_node(self, node: ProgressionNode) -> int:
+        return max(0, node.global_layer)
+
+    def _logic_books_required_for_node(self, node: ProgressionNode) -> int:
+        return self._actual_books_required_for_node(node) * VANILLA_BOOK_LOGIC_MULTIPLIER
 
     @property
     def reception_tree(self):
@@ -149,24 +164,8 @@ class LORWorld(World):
     def progression_edges(self) -> list[tuple[str, str]]:
         return self.setup_result.progression_edges
 
-    def _selected_endgoal_receptions(self):
-        selected_goals = set(self.options.endgoals.value)
-        selected_nodes = []
-
-        for node in endgoal_receptions:
-            if 70001 <= node.id <= 70010:
-                if "Reverberation Ensemble" in selected_goals:
-                    selected_nodes.append(node)
-                continue
-
-            if node.id == 60003 and "Black Silence" in selected_goals:
-                selected_nodes.append(node)
-                continue
-
-            if node.id == 60004 and "Distorted Ensemble" in selected_goals:
-                selected_nodes.append(node)
-
-        return selected_nodes
+    def _selected_goal_nodes(self) -> list[ProgressionNode]:
+        return self.setup_result.selected_goal_nodes
 
     def _initialize_item_state(self) -> None:
         self.item_copies: dict[str, int] = {name: data.copies for name, data in items_by_name.items()}
@@ -181,14 +180,23 @@ class LORWorld(World):
         self.item_copies["Booster Pack"] = 0
         self.item_classifications["Booster Pack"] = ItemClassification.filler
 
-        if self._boe_spheres_enabled():
-            self.item_copies["Book of Everything"] = self._boe_bundles_required_through_sphere(7)
-            self.item_classifications["Book of Everything"] = ItemClassification.progression
+        if self._boe_layers_enabled():
+            required_boe = self._boe_bundles_required_through_sphere(7)
+            self.item_copies["Book of Everything"] = required_boe * BOE_POOL_MULTIPLIER
+            self.item_classifications["Book of Everything"] = ItemClassification.progression_skip_balancing
 
-        for book_id in self.setup_result.used_book_requirements:
-            book_name = books_dict[book_id].name
-            self.item_copies[book_name] = 1
-            self.item_classifications[book_name] = ItemClassification.progression
+            vanilla_book_pool = self._actual_vanilla_books_required() * VANILLA_BOOK_LOGIC_MULTIPLIER
+            book_order = list(books)
+            (self.lorap_random or self.random).shuffle(book_order)
+            for index in range(vanilla_book_pool):
+                book_name = book_order[index % len(book_order)].name
+                self.item_copies[book_name] += 1
+                self.item_classifications[book_name] = ItemClassification.progression_skip_balancing
+        else:
+            for book_id in self.setup_result.used_book_requirements:
+                book_name = books_dict[book_id].name
+                self.item_copies[book_name] = 1
+                self.item_classifications[book_name] = ItemClassification.progression
 
         self.item_copies["Passive Attribution Points"] = int(self.options.passive_points_items.value)
         self.item_copies["Passive Limits Break"] = int(self.options.passive_limits_items.value)
@@ -243,6 +251,7 @@ class LORWorld(World):
         self.node_entrances: dict[str, list[object]] = {}
         self.edge_entrances: list[tuple[str, str, object]] = []
         self.node_clear_events: dict[str, str] = {}
+        self.sphere_clearability_events: dict[int, str] = {}
         self.goal_event_items: list[str] = []
         self.location_nodes: dict[str, ProgressionNode] = {}
 
@@ -271,14 +280,13 @@ class LORWorld(World):
 
             self.multiworld.regions.append(region)
 
-        if "Keter Realization" in set(self.options.endgoals.value):
-            keter_node = next((node for node in self.progression_nodes if node.id == 210009), None)
-            if keter_node is not None:
-                event_name = "Keter Realization Goal Completed"
-                event_location = LORLocation(self.player, event_name, None, self.node_regions[keter_node.key])
+        if self._boe_layers_enabled():
+            for sphere in range(1, 7):
+                event_name = f"Sphere {sphere} Fully Clearable"
+                event_location = LORLocation(self.player, event_name, None, menu)
                 event_location.place_locked_item(self.create_event(event_name))
-                self.node_regions[keter_node.key].locations.append(event_location)
-                self.goal_event_items.append(event_name)
+                menu.locations.append(event_location)
+                self.sphere_clearability_events[sphere] = event_name
 
         first_node = nodes_by_key[f"reception:{self.reception_tree.first_reception}"]
         first_entrance = menu.connect(self.node_regions[first_node.key])
@@ -300,17 +308,17 @@ class LORWorld(World):
         goal_hub = Region("Goal Hub", self.player, self.multiworld)
         self.multiworld.regions.append(goal_hub)
         self.node_regions["goal_hub"] = goal_hub
-        goal_hub_entrance = self.node_regions[last_node.key].connect(goal_hub)
+        goal_hub_entrance = menu.connect(goal_hub)
         self.node_entrances.setdefault("goal_hub", []).append(goal_hub_entrance)
         self.edge_entrances.append((last_node.key, "goal_hub", goal_hub_entrance))
 
-        selected_goals = self._selected_endgoal_receptions()
+        selected_goals = self._selected_goal_nodes()
         for goal_node in selected_goals:
-            key = f"endgoal:{goal_node.id}"
+            key = goal_node.key
             region = Region(goal_node.name, self.player, self.multiworld)
             self.node_regions[key] = region
 
-            for index in range(goal_node.checks):
+            for index in range(goal_node.source.checks):
                 location_name = f"{goal_node.name} ({index + 1})"
                 location = LORLocation(self.player, location_name, locations_name_to_id[location_name], region)
                 location.progress_type = LocationProgressType.EXCLUDED
@@ -354,6 +362,8 @@ class LORWorld(World):
         return logic.lor_enough_librarians(node.req_librarians, state, self.player)
 
     def _node_book_requirements_met(self, state, node: ProgressionNode) -> bool:
+        if self._boe_layers_enabled():
+            return True
         if node.req_books:
             book_names = [books_dict[book_id].name for book_id in node.req_books]
             if not state.has_all(book_names, self.player):
@@ -385,7 +395,7 @@ class LORWorld(World):
         if not sphere_nodes:
             return True
 
-        clear_percentage = max(0, min(100, self._option_value("sphere_clear_percentage", 70)))
+        clear_percentage = max(0, min(100, self._option_value("sphere_clear_percentage", 50)))
         required = math.ceil(len(sphere_nodes) * clear_percentage / 100)
         if required <= 0:
             return True
@@ -407,14 +417,26 @@ class LORWorld(World):
         source_event = self.node_clear_events.get(source_key)
 
         def access_rule(state, target_node=target_node, source_event=source_event):
+            if self._boe_layers_enabled():
+                if target_node is not None:
+                    if not self._node_requirements_met(state, target_node):
+                        return False
+                    required_books = self._actual_books_required_for_node(target_node)
+                    if not state.has_group("Vanilla Books", self.player, required_books):
+                        return False
+                if (source_key, target_key) in self.setup_result.transition_edges:
+                    source_node = nodes_by_key.get(source_key)
+                    if source_node is not None and not self._sphere_clear_requirement_met(state, source_node.sphere):
+                        return False
+                    required_boe = self._boe_bundles_required_through_sphere(source_node.sphere)
+                    if not state.has("Book of Everything", self.player, required_boe):
+                        return False
+                return True
+
             if source_event is not None and not state.has(source_event, self.player):
                 return False
             if target_node is not None and not self._node_requirements_met(state, target_node):
                 return False
-            if self._boe_spheres_enabled() and (source_key, target_key) in self.setup_result.transition_edges:
-                source_node = nodes_by_key.get(source_key)
-                if not self._sphere_clear_requirement_met(state, source_node.sphere):
-                    return False
             if (
                 target_node is not None
                 and (source_key, target_key) in self.setup_result.transition_edges
@@ -434,22 +456,75 @@ class LORWorld(World):
     def _make_goal_hub_rule(self):
         oliver_key = f"reception:{self.reception_tree.last_reception}"
         oliver_event = self.node_clear_events.get(oliver_key)
+        always_unlocked = self._option_enabled("endgoals_always_unlocked")
 
-        def access_rule(state, oliver_event=oliver_event):
+        def access_rule(state, oliver_event=oliver_event, always_unlocked=always_unlocked):
+            if always_unlocked:
+                return True
             if oliver_event is not None and not state.has(oliver_event, self.player):
                 return False
             return True
 
         return access_rule
 
-    def _make_boe_location_rule(self, required_boe: int, previous_rule):
-        def access_rule(state, required_boe=required_boe, previous_rule=previous_rule):
-            return previous_rule(state) and state.has("Book of Everything", self.player, required_boe)
+    def _make_endgoal_access_rule(self, node: ProgressionNode):
+        def access_rule(state, node=node):
+            return self._node_requirements_met(state, node)
 
         return access_rule
 
     def _make_boe_sphere_location_rule(self, node: ProgressionNode, previous_rule):
-        return self._make_boe_location_rule(self._boe_bundles_required_through_sphere(node.sphere - 1), previous_rule)
+        required_boe = self._boe_bundles_required_through_sphere(node.sphere - 1)
+        previous_sphere_event = self.sphere_clearability_events.get(node.sphere - 1)
+
+        def access_rule(
+            state,
+            required_boe=required_boe,
+            previous_rule=previous_rule,
+            previous_sphere_event=previous_sphere_event,
+        ):
+            if not previous_rule(state):
+                return False
+            if not state.has("Book of Everything", self.player, required_boe):
+                return False
+            return previous_sphere_event is None or state.has(previous_sphere_event, self.player)
+
+        return access_rule
+
+    def _make_sphere_clearability_event_rule(self, sphere: int):
+        sphere_locations = tuple(
+            location_name for location_name, node in self.location_nodes.items()
+            if node.sphere == sphere
+        )
+
+        def access_rule(state, sphere_locations=sphere_locations):
+            return all(
+                state.can_reach(location_name, "Location", self.player)
+                for location_name in sphere_locations
+            )
+
+        return access_rule
+
+    def _make_layer_item_location_rule(self, node: ProgressionNode, previous_rule):
+        required_books = self._logic_books_required_for_node(node)
+
+        def access_rule(state, required_books=required_books, previous_rule=previous_rule):
+            return previous_rule(state) and state.has_group("Vanilla Books", self.player, required_books)
+
+        return access_rule
+
+    def _make_goal_progression_rule(self, previous_rule):
+        required_books = self._actual_vanilla_books_required()
+        required_boe = self._boe_bundles_required_through_sphere(7)
+
+        def access_rule(state, previous_rule=previous_rule):
+            return (
+                previous_rule(state)
+                and state.has_group("Vanilla Books", self.player, required_books)
+                and state.has("Book of Everything", self.player, required_boe)
+            )
+
+        return access_rule
 
     def _make_victory_rule(self):
         def victory_rule(state):
@@ -472,7 +547,7 @@ class LORWorld(World):
             if copies > 0:
                 itempool.extend([item_name] * copies)
 
-        filler_name = "Booster Pack" if self._boe_spheres_enabled() else ["Book of Everything", "Booster Pack"][self.options.filler_items.value]
+        filler_name = "Booster Pack" if self._boe_layers_enabled() else ["Book of Everything", "Booster Pack"][self.options.filler_items.value]
         itempool.extend([filler_name] * max(0, total_locations - len(itempool)))
 
         if len(itempool) > total_locations:
@@ -511,6 +586,8 @@ class LORWorld(World):
         return item_rule
 
     def _set_book_placement_rules(self) -> None:
+        if self._boe_layers_enabled():
+            return
         if not self._option_enabled("balance_book_requirements"):
             return
 
@@ -523,7 +600,7 @@ class LORWorld(World):
             location.item_rule = self._make_book_item_rule(node, location.item_rule, requirement_chapters)
 
     def _set_boe_sphere_location_rules(self) -> None:
-        if not self._boe_spheres_enabled():
+        if not self._boe_layers_enabled():
             return
 
         for location_name, node in self.location_nodes.items():
@@ -533,7 +610,21 @@ class LORWorld(World):
             location = self.multiworld.get_location(location_name, self.player)
             set_rule(location, self._make_boe_sphere_location_rule(node, location.access_rule))
 
+    def _set_boe_sphere_clearability_event_rules(self) -> None:
+        if not self._boe_layers_enabled():
+            return
+
+        for sphere, event_name in self.sphere_clearability_events.items():
+            event_location = self.multiworld.get_location(event_name, self.player)
+            set_rule(event_location, self._make_sphere_clearability_event_rule(sphere))
+
     def _set_layer_location_rules(self) -> None:
+        if self._boe_layers_enabled():
+            for location_name, node in self.location_nodes.items():
+                location = self.multiworld.get_location(location_name, self.player)
+                set_rule(location, self._make_layer_item_location_rule(node, location.access_rule))
+            return
+
         for location_name, node in self.location_nodes.items():
             if not self._layer_access_balancing_enabled(node):
                 continue
@@ -549,19 +640,17 @@ class LORWorld(World):
             set_rule(clear_location, self._make_layer_location_rule(node, clear_location.access_rule))
 
     def _set_boe_goal_location_rules(self) -> None:
-        if not self._boe_spheres_enabled():
+        if not self._boe_layers_enabled():
             return
-
-        required_boe = self._boe_bundles_required_through_sphere(7)
 
         for key, region in self.node_regions.items():
             if key.startswith("endgoal:") or key == "victory":
                 for location in region.locations:
-                    set_rule(location, self._make_boe_location_rule(required_boe, location.access_rule))
+                    set_rule(location, self._make_goal_progression_rule(location.access_rule))
 
         for location_name in self.goal_event_items:
             location = self.multiworld.get_location(location_name, self.player)
-            set_rule(location, self._make_boe_location_rule(required_boe, location.access_rule))
+            set_rule(location, self._make_goal_progression_rule(location.access_rule))
 
     def set_rules(self) -> None:
         first_key = f"reception:{self.reception_tree.first_reception}"
@@ -572,18 +661,21 @@ class LORWorld(World):
             elif target_key == "victory":
                 set_rule(entrance, self._make_victory_rule())
             elif target_key.startswith("endgoal:"):
-                set_rule(entrance, self._make_goal_hub_rule())
+                goal_node = next(node for node in self._selected_goal_nodes() if node.key == target_key)
+                set_rule(entrance, self._make_endgoal_access_rule(goal_node))
             elif target_key != first_key:
                 set_rule(entrance, self._make_edge_access_rule(source_key, target_key))
 
         self._set_book_placement_rules()
         self._set_layer_location_rules()
         self._set_boe_sphere_location_rules()
+        self._set_boe_sphere_clearability_event_rules()
         self._set_boe_goal_location_rules()
 
     def fill_slot_data(self) -> typing.Dict[str, typing.Any]:
         slot_data = self.options.as_dict(
             "endgoals",
+            "persistent_goals",
             "ensemble_battles",
             "abno_page_shuffle",
             "abno_page_randomization",
@@ -609,6 +701,7 @@ class LORWorld(World):
         )
         # slot_data["randomize_reception_tree"] = 1
         slot_data["lorap_client_seed"] = self.client_seed
+        slot_data["slot_data_version"] = SLOT_DATA_VERSION
         # slot_data["effective_lorap_seed"] = self.effective_lorap_seed
 
         slot_data["reception_book_requirements"] = {
@@ -617,8 +710,15 @@ class LORWorld(World):
 
         abno_book_requirements: list[list[list[int]]] = []
         abno_fight_order: list[list[int]] = []
+        included_stage_ids = {
+            node.id for node in [*self.progression_nodes, *self._selected_goal_nodes()]
+            if node.kind == "stage"
+        }
         for floor in self.floors:
-            stages = [*floor.abno_stages, floor.realization_stage]
+            stages = [
+                stage for stage in [*floor.abno_stages, floor.realization_stage]
+                if stage.id in included_stage_ids
+            ]
             abno_book_requirements.append([stage.req_books for stage in stages])
             abno_fight_order.append([stage.id for stage in stages])
         slot_data["abno_book_requirements"] = abno_book_requirements
@@ -627,11 +727,26 @@ class LORWorld(World):
         slot_data["first_reception"] = self.reception_tree.first_reception
         slot_data["last_reception"] = self.reception_tree.last_reception
         slot_data["abno_stage_chapters"] = self.setup_result.abno_stage_chapters
-        slot_data["boe_bundles_per_sphere"] = self._boe_bundles_per_sphere() if self._boe_spheres_enabled() else [0] * 7
+        slot_data["boe_bundles_per_sphere"] = self._boe_bundles_per_sphere() if self._boe_layers_enabled() else [0] * 7
         slot_data["boe_bundles_cumulative"] = [
             self._boe_bundles_required_through_sphere(sphere)
             for sphere in range(1, 8)
-        ] if self._boe_spheres_enabled() else [0] * 7
+        ] if self._boe_layers_enabled() else [0] * 7
+        slot_data["boe_required_total"] = self._boe_bundles_required_through_sphere(7) if self._boe_layers_enabled() else 0
+        slot_data["boe_pool_total"] = self.item_copies["Book of Everything"]
+        slot_data["layer_count"] = self.setup_result.layer_count
+        slot_data["vanilla_books_required_total"] = self._actual_vanilla_books_required() if self._boe_layers_enabled() else 0
+        slot_data["vanilla_books_pool_total"] = (
+            self._actual_vanilla_books_required() * VANILLA_BOOK_LOGIC_MULTIPLIER
+            if self._boe_layers_enabled() else 0
+        )
+        slot_data["vanilla_books_required_per_layer"] = (
+            list(range(self.setup_result.layer_count)) if self._boe_layers_enabled() else []
+        )
+        slot_data["vanilla_books_logic_per_layer"] = (
+            [layer * VANILLA_BOOK_LOGIC_MULTIPLIER for layer in range(self.setup_result.layer_count)]
+            if self._boe_layers_enabled() else []
+        )
 
         battle_nodes: dict[str, dict] = {}
         for node in self.progression_nodes:
@@ -642,6 +757,7 @@ class LORWorld(World):
                 "chapter": node.chapter,
                 "sphere": node.sphere,
                 "sphere_layer": node.sphere_layer,
+                "global_layer": node.global_layer,
                 "req_librarians": node.req_librarians,
                 #"visual_x": node.visual_x,
                 #"visual_y": node.visual_y,
@@ -661,22 +777,28 @@ class LORWorld(World):
 
         last_reception_key = f"reception:{self.reception_tree.last_reception}"
         #last_node = next(node for node in self.progression_nodes if node.key == last_reception_key)
-        selected_goals = self._selected_endgoal_receptions()
+        selected_goals = self._selected_goal_nodes()
         if selected_goals:
             #goal_spacing = 250.0
             center = (len(selected_goals) - 1) / 2.0
             for index, goal_node in enumerate(selected_goals):
                 offset = index - center
-                key = f"endgoal:{goal_node.id}"
-                battle_nodes[key] = {
+                key = goal_node.key
+                node_data = {
                     "id": goal_node.id,
                     "name": goal_node.name,
-                    "kind": "reception",
+                    "kind": goal_node.kind,
                     "chapter": goal_node.chapter,
+                    "sphere": 8,
+                    "sphere_layer": 0,
+                    "global_layer": self.setup_result.layer_count - 1,
                     "req_librarians": goal_node.req_librarians,
                     #"visual_x": round(last_node.visual_x + offset * goal_spacing, 2),
                     #"visual_y": round(last_node.visual_y + 360.0 + abs(offset) * 25.0, 2),
                 }
+                if goal_node.kind == "stage" and goal_node.floor is not None:
+                    node_data["assigned_floor"] = goal_node.floor.id
+                battle_nodes[key] = node_data
                 battle_edges.append({"source": last_reception_key, "target": key})
 
         slot_data["battle_nodes"] = battle_nodes

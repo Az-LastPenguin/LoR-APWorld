@@ -4,7 +4,7 @@ from collections import deque
 from dataclasses import dataclass
 from BaseClasses import Location
 from .options import LOROptions
-from .gamedata.receptions import ReceptionNode, reception_nodes, receptions_dict
+from .gamedata.receptions import ReceptionNode, reception_nodes, endgoal_receptions, receptions_dict
 from .gamedata.floors import Floor, FloorStage, vanilla_floors, vanilla_floor_stages
 from .gamedata.books import BookInfo, books, books_dict
 
@@ -35,6 +35,7 @@ class ProgressionNode:
     branch_side: int = 0
     sphere: int = 0
     sphere_layer: int = 0
+    global_layer: int = 0
     #visual_x: int = 0 #float = 0.0
     #visual_y: int = 0 #float = 0.0
 
@@ -76,8 +77,11 @@ class LORSetupResult:
     progression_edges: list[tuple[str, str]]
     transition_edges: set[tuple[str, str]]
     shortcut_connections: bool
+    boe_layers_mode: bool
     abno_stage_chapters: dict[int, int]
     used_book_requirements: set[int]
+    layer_count: int
+    selected_goal_nodes: list[ProgressionNode]
 
 
 def _option_enabled(options: LOROptions, option_name: str) -> bool:
@@ -93,6 +97,75 @@ def _option_value(options: LOROptions, option_name: str, default: int) -> int:
 
 def _clone_reception_nodes() -> list[ReceptionNode]:
     return copy.deepcopy(reception_nodes)
+
+
+def _goal_receptions(goal_names: set[str]) -> list[ReceptionNode]:
+    selected_nodes: list[ReceptionNode] = []
+
+    for node in endgoal_receptions:
+        if 70001 <= node.id <= 70010:
+            if "Reverberation Ensemble" in goal_names:
+                selected_nodes.append(node)
+            continue
+
+        if node.id == 60003 and "Black Silence" in goal_names:
+            selected_nodes.append(node)
+            continue
+
+        if node.id == 60004 and "Distorted Ensemble" in goal_names:
+            selected_nodes.append(node)
+
+    return selected_nodes
+
+
+def get_selected_endgoal_receptions(options: LOROptions) -> list[ReceptionNode]:
+    return _goal_receptions(set(options.endgoals.value))
+
+
+def _clone_persistent_goal_receptions(options: LOROptions) -> list[ReceptionNode]:
+    persistent_only = set(options.persistent_goals.value) - set(options.endgoals.value)
+    return copy.deepcopy(_goal_receptions(persistent_only))
+
+
+def _include_keter_realization(options: LOROptions) -> bool:
+    return (
+        "Keter Realization" in set(options.persistent_goals.value)
+        and "Keter Realization" not in set(options.endgoals.value)
+    )
+
+
+def _make_selected_goal_nodes(options: LOROptions, floors: list[Floor]) -> list[ProgressionNode]:
+    selected_nodes = [
+        ProgressionNode(
+            key=f"endgoal:{reception.id}",
+            name=reception.name,
+            id=reception.id,
+            chapter=reception.chapter,
+            req_librarians=reception.req_librarians,
+            kind="reception",
+            source=reception,
+        )
+        for reception in copy.deepcopy(get_selected_endgoal_receptions(options))
+    ]
+
+    if "Keter Realization" in set(options.endgoals.value):
+        stage_floors = _stage_to_floor_lookup(floors)
+        keter_stage = next(
+            stage for floor in floors for stage in [*floor.abno_stages, floor.realization_stage]
+            if stage.id == 210009
+        )
+        selected_nodes.append(ProgressionNode(
+            key="endgoal:210009",
+            name=keter_stage.name,
+            id=keter_stage.id,
+            chapter=max(1, min(7, keter_stage.chapter)),
+            req_librarians=keter_stage.req_librarians,
+            kind="stage",
+            source=keter_stage,
+            floor=stage_floors[keter_stage.id],
+        ))
+
+    return selected_nodes
 
 
 def _clone_floors() -> list[Floor]:
@@ -306,12 +379,13 @@ def _make_sphere_layers(
     first: ProgressionNode,
     ordinary: list[ProgressionNode],
     last: ProgressionNode,
-    boe_spheres_mode: bool,
+    boe_layers_mode: bool,
 ) -> list[list[list[ProgressionNode]]]:
     spheres: list[list[list[ProgressionNode]]] = []
+    global_layer = 0
     for sphere in range(1, 8):
         nodes = [node for node in ordinary if node.sphere == sphere]
-        if boe_spheres_mode:
+        if boe_layers_mode:
             rng.shuffle(nodes)
         else:
             nodes.sort(key=lambda node: _node_sort_key(rng, node))
@@ -319,6 +393,17 @@ def _make_sphere_layers(
         fixed_start = [first] if sphere == 1 else []
         fixed_end = [last] if sphere == 7 else []
         widths = _layer_widths(rng, sphere, len(nodes))
+        if boe_layers_mode and sphere == 1:
+            bootstrap_width = widths[0]
+            bootstrap_candidates = [
+                node for node in nodes
+                if node.kind == "reception" and node.req_librarians <= 1
+            ]
+            if len(bootstrap_candidates) < bootstrap_width:
+                raise Exception("LORAP could not build a reception-only bootstrap layer")
+            bootstrap = bootstrap_candidates[:bootstrap_width]
+            bootstrap_keys = {node.key for node in bootstrap}
+            nodes = [*bootstrap, *(node for node in nodes if node.key not in bootstrap_keys)]
         layers: list[list[ProgressionNode]] = []
         if fixed_start:
             layers.append(fixed_start)
@@ -335,8 +420,13 @@ def _make_sphere_layers(
             for node in layer:
                 node.sphere = sphere
                 node.sphere_layer = layer_index
+                logical_layer_index = layer_index
+                if boe_layers_mode and sphere == 1 and layer_index > 0:
+                    logical_layer_index -= 1
+                node.global_layer = global_layer + logical_layer_index
                 node.progression_weight = sphere * 1000.0 + layer_index * 10.0 + rng.random()
         spheres.append(layers)
+        global_layer += len(layers) - (1 if boe_layers_mode and sphere == 1 else 0)
     return spheres
 
 
@@ -444,7 +534,11 @@ def _build_layered_edges(
 
 
 
-def _make_progression_nodes(tree: ReceptionTree, floors: list[Floor]) -> tuple[ProgressionNode, list[ProgressionNode], ProgressionNode]:
+def _make_progression_nodes(
+    tree: ReceptionTree,
+    floors: list[Floor],
+    include_keter_realization: bool,
+) -> tuple[ProgressionNode, list[ProgressionNode], ProgressionNode]:
     stage_floors = _stage_to_floor_lookup(floors)
     nodes_by_key: dict[str, ProgressionNode] = {}
 
@@ -469,6 +563,8 @@ def _make_progression_nodes(tree: ReceptionTree, floors: list[Floor]) -> tuple[P
 
     for floor in floors:
         for stage in [*floor.abno_stages, floor.realization_stage]:
+            if stage.id == 210009 and not include_keter_realization:
+                continue
             add_stage(stage)
 
     ordinary = [node for node in nodes_by_key.values() if node.key not in {first.key, last.key}]
@@ -480,14 +576,15 @@ def build_mixed_battle_graph(
     tree: ReceptionTree,
     floors: list[Floor],
     shortcut_connections: bool,
-    boe_spheres_mode: bool,
+    boe_layers_mode: bool,
+    include_keter_realization: bool,
 ) -> tuple[list[ProgressionNode], list[tuple[str, str]], set[tuple[str, str]], dict[int, int]]:
-    first, ordinary, last = _make_progression_nodes(tree, floors)
+    first, ordinary, last = _make_progression_nodes(tree, floors, include_keter_realization)
     _assign_progression_weights(rng, ordinary)
     _assign_spheres(rng, ordinary)
     first.sphere = 1
     last.sphere = 7
-    spheres = _make_sphere_layers(rng, first, ordinary, last, boe_spheres_mode)
+    spheres = _make_sphere_layers(rng, first, ordinary, last, boe_layers_mode)
     edges, transition_edges = _build_layered_edges(rng, spheres, shortcut_connections)
 
     nodes_by_key = {node.key: node for node in [first, *ordinary, last]}
@@ -635,6 +732,28 @@ def validate_setup_result(result: LORSetupResult) -> None:
             if len(layer) < 2 and not (is_rats_layer or is_oliver_layer):
                 raise Exception(f"LORAP sphere {sphere} has a singleton layer {layer_index}")
 
+    global_layers = {node.global_layer for node in result.progression_nodes}
+    if global_layers != set(range(result.layer_count)):
+        raise Exception("LORAP global layers are not contiguous")
+
+    expected_global_layer = 0
+    for sphere in range(1, 8):
+        for sphere_layer in sorted(layers_by_sphere[sphere]):
+            layer = layers_by_sphere[sphere][sphere_layer]
+            is_boe_bootstrap = result.boe_layers_mode and sphere == 1 and sphere_layer == 1
+            layer_global = 0 if is_boe_bootstrap else expected_global_layer
+            if {node.global_layer for node in layer} != {layer_global}:
+                raise Exception(f"LORAP sphere {sphere} layer {sphere_layer} has an invalid global layer")
+            if not is_boe_bootstrap:
+                expected_global_layer += 1
+
+    if result.boe_layers_mode:
+        bootstrap = layers_by_sphere[1].get(1, [])
+        if len(bootstrap) < 2:
+            raise Exception("LORAP BoE bootstrap layer has fewer than two receptions")
+        if any(node.kind != "reception" or node.req_librarians > 1 for node in bootstrap):
+            raise Exception("LORAP BoE bootstrap layer contains a gated battle")
+
     for source, target in result.progression_edges:
         if source == target:
             raise Exception(f"LORAP graph has a self-cycle on {source}")
@@ -749,13 +868,15 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
     for _ in range(150):
         try:
             tree = ReceptionTree()
-            tree.reception_nodes = _clone_reception_nodes()
-            tree.first_reception = tree.reception_nodes[0].id
-            tree.last_reception = tree.reception_nodes[-1].id
+            regular_receptions = _clone_reception_nodes()
+            tree.first_reception = regular_receptions[0].id
+            tree.last_reception = regular_receptions[-1].id
+            tree.reception_nodes = [*regular_receptions, *_clone_persistent_goal_receptions(options)]
 
             floors = _clone_floors()
             _reset_req_books(tree, floors)
             _shuffle_floor_content(rng, floors, options)
+            selected_goal_nodes = _make_selected_goal_nodes(options, floors)
 
             progression_nodes, progression_edges, transition_edges, abno_stage_chapters = build_mixed_battle_graph(
                 rng,
@@ -763,8 +884,20 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
                 floors,
                 _option_enabled(options, "shortcut_connections"),
                 _option_value(options, "progression_mode", 0) == 1,
+                _include_keter_realization(options),
             )
-            used_book_requirements = assign_archipelago_book_requirements(rng, progression_nodes, progression_edges, options)
+            boe_layers_mode = _option_value(options, "progression_mode", 0) == 1
+            used_book_requirements = (
+                set()
+                if boe_layers_mode
+                else assign_archipelago_book_requirements(rng, progression_nodes, progression_edges, options)
+            )
+            layer_count = max(node.global_layer for node in progression_nodes) + 1
+            for goal_node in selected_goal_nodes:
+                goal_node.sphere = 8
+                goal_node.global_layer = layer_count - 1
+                if goal_node.kind == "stage":
+                    abno_stage_chapters[goal_node.id] = goal_node.chapter
 
             result = LORSetupResult(
                 tree=tree,
@@ -773,8 +906,11 @@ def setup_locations(rng: random.Random, options: LOROptions) -> LORSetupResult:
                 progression_edges=progression_edges,
                 transition_edges=transition_edges,
                 shortcut_connections=_option_enabled(options, "shortcut_connections"),
+                boe_layers_mode=boe_layers_mode,
                 abno_stage_chapters=abno_stage_chapters,
                 used_book_requirements=used_book_requirements,
+                layer_count=layer_count,
+                selected_goal_nodes=selected_goal_nodes,
             )
             validate_setup_result(result)
 
