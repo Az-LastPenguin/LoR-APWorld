@@ -39,10 +39,10 @@ class StartingFloor(Choice):
 ### ENDGOAL-RELATED ###
 class Endgoals(OptionSet):
     """
-    Select Endgoals of a Run.
-    You must achieve all of the selected goals, in order for the Run to be completed.
-    Goals contain checks which WONT yield any items progression relies on (Mostly only Passive/Emotion upgrades and Book of Everything)
-    Goals that are not selected will STILL be accessed in the game and WILL yield checks.
+    Select the End Goals of a run.
+    You must achieve all selected goals for the run to be completed.
+    Goal checks are excluded from progression placement and contain only non-progression rewards.
+    Goals that are not selected are controlled by the 'Persistent Goals' option.
     
     'Reverberation Ensemble' - Defeat X out of 10 Ensemble battles. X can be set in the 'Reverberation Ensemble Goal Receptions' setting.
     'Black Silence' - Complete Reception of The Black Silence.
@@ -54,9 +54,22 @@ class Endgoals(OptionSet):
     default = {"Reverberation Ensemble"}
     valid_keys = {"Reverberation Ensemble", "Black Silence", "Keter Realization", "Distorted Ensemble"}
 
+class PersistentGoals(OptionSet):
+    """
+    Select goals that should appear in the regular stage tree when they are not selected as End Goals.
+    A goal selected in both options remains in the goal section and is not added to the regular tree.
+    """
+
+    display_name = "Persistent Goals"
+    default = set()
+    valid_keys = {"Reverberation Ensemble", "Black Silence", "Keter Realization", "Distorted Ensemble"}
+
 class EnsembleBattles(Range):
     """
-    Select amount of Reverberation Ensemble Receptions you have to complete in order for 'Reverberation Ensemble' goal to be considered completed.
+    Select the number of Reverberation Ensemble receptions required for the
+    'Reverberation Ensemble' goal to be considered completed.
+
+    This option only applies when Reverberation Ensemble is selected as an End Goal.
     """
     display_name = "Reverberation Ensemble Goal Receptions"
     range_start = 1
@@ -84,7 +97,7 @@ class AbnoPageShuffle(Choice):
     InFloor - Pages are shuffled in their floors individually.
     Sets - Pages are shuffled between floors in abnormality sets
            (For example 3 of Scorched Girl's pages are gonna end up in the same page group after randomization).
-    Pages - Pages are shuffled between floors idividually.
+    Pages - Pages are shuffled between floors individually.
     """
 
     display_name = "Shuffle Abnormality Pages"
@@ -112,7 +125,7 @@ class AbnoPageRandomization(Choice):
 class ExodiaGuarantee(Toggle):
     """
     If 'Abnormality Page Shuffle' option is set to 'Sets' or 'Pages', forces certain Abno Pages to be on the same floor after randomization:
-    'Hate', 'Desair', 'Greed', 'Wrath', 'Nix';
+    'Hate', 'Despair', 'Greed', 'Wrath', 'Nix';
     'Big Eyes', 'Small Beak', 'Long Arms', 'The Beast';
     'Baptism', 'Apostles', 'Advent'.
     
@@ -159,6 +172,8 @@ class RandomizeBlackSilencePage(Toggle):
 
 class BookContentsRandomization(Choice):
     """
+    ???NOT IMPLEMENTED??? TODO
+
     Select the way every vanilla book's contents will be randomized.
 
     BookChapter - Book contents will be balanced around the chapter of the book.
@@ -173,6 +188,8 @@ class BookContentsRandomization(Choice):
 
 class BalanceBookRequirements(Toggle):
     """
+    BOOK REQUIREMENTS MODE ONLY.
+
     If true, receptions/suppressions/realizations will require books from around their chapters.
     Otherwise, random books will be selected.
     """
@@ -181,11 +198,13 @@ class BalanceBookRequirements(Toggle):
 
 class BookRequirementDensity(Range):
     """
-    Controls how many nodes on the map will share same book requirment.
+    BOOK REQUIREMENTS MODE ONLY.
+
+    Controls how many nodes on the map will share the same book requirement.
 
     At 100, every locked battle node receives its own book requirement.
-    Lower values makes nearby nodes share the same requirements. At 1, nearly
-    the entire graph may be unlocked by the one book.
+    Lower values make nearby nodes share the same requirements. At 1, nearly
+    the entire graph may be unlocked by one book.
     """
 
     display_name = "Book Requirement Density"
@@ -205,13 +224,19 @@ class ShortcutConnections(Toggle):
 class ProgressionMode(Choice):
     """
     Book Requirements - Battles are gated by the battle graph and required books.
-    BoE Spheres - Battles still require books, but moving between spheres also
-                  uses sphere clear percentage and Book of Everything bundles.
+
+    BoE Layers - Burning books unlocks new battle layers. Entering the next sphere
+                 also requires clearing the configured percentage of the current sphere.
+                 Books of Everything provide max stacks of pages in a little mixed chapter-by-chapter order,
+                 while Booster Packs provide a few mostly random pages.
+
+    Compared with Book Requirements, BoE Layers gives the player more freedom to
+    choose which battles to complete and is better suited for sync-sessions.
     """
 
     display_name = "Progression Mode"
     option_book_requirements = 0
-    option_boe_spheres = 1
+    option_boe_layers = 1
     default = 0
 
 class ShuffleAbnos(Toggle):
@@ -240,6 +265,8 @@ class ShuffleReverbEnsembleFloors(Toggle):
 ### PROGRESSION ###
 class ReceptionsRequireBooks(Toggle):
     """
+    BOOK REQUIREMENTS MODE ONLY.
+
     If 'true', every reception will require books to send invitation.
     """
 
@@ -248,6 +275,8 @@ class ReceptionsRequireBooks(Toggle):
 
 class FloorsRequireBooks(Toggle):
     """
+    BOOK REQUIREMENTS MODE ONLY.
+
     If 'true', Abnormality Suppressions and Realizations will require books.
     """
     
@@ -266,8 +295,7 @@ class EnemiesTurnIntoChecks(Toggle):
 
 class EndgoalsAlwaysUnlocked(Toggle):
     """
-    If 'true', you won't have to complete Oliver's reception is order to access endgoal receptions
-    (Black Silence, Ensemble & Distorted Ensemble)
+    If 'true', selected End Goals can be accessed without completing Oliver's reception.
     """
 
     display_name = "Endgoals Always Unlocked"
@@ -275,14 +303,16 @@ class EndgoalsAlwaysUnlocked(Toggle):
 
 class SphereClearPercentage(Range):
     """
-    In BoE Spheres mode, controls how much of the current sphere must be
-    completed before battles in the next sphere can open.
+    BOE LAYERS MODE ONLY.
+
+    Controls how much of the current sphere must be completed before the first
+    layer of the next sphere can be unlocked.
     """
 
     display_name = "Sphere Clear Percentage"
     range_start = 0
     range_end = 100
-    default = 70
+    default = 50
 
 ### ITEMS###
 class PassivePointsItems(Range):
@@ -337,11 +367,11 @@ class EmotionLimitsItems(Range):
     Select the amount of "Emotion Limits Break" Items you'll be able to acquire in total.
     You always start with 0 Items (Unless configured otherwise) and your max Emotion Level increases by 1 for each Item.
     These Items determine the Maximum Emotion Level your librarians can get during receptions.
-    Levels past 5 (Vanilla max) give additional buffs like +1 Max Light, Abno and EGO pages & accasionally a Speed Die.
-    That also means that you won't be getting Abno and EGO Pages even if you have them unless your Max Emotion Level is atleast 1 and 3 respectively.
+    Levels past 5 (Vanilla max) give additional buffs like +1 Max Light, Abno and EGO pages & occasionally a Speed Die.
+    That also means that you won't be getting Abno and EGO Pages even if you have them unless your Max Emotion Level is at least 1 and 3 respectively.
     Base amount is 15 Items, meaning up to 15 Max Emotion Level in-game.
 
-    Emotion level effects a changed a bit in this mod:
+    Emotion level effects are changed a bit in this mod:
     1. You get an abno page at every team emotion level like in vanilla game, but instead of getting only certain level abno pages
         at certain team emotion levels, the pool of pages contains every page which level is less than or equal to the current
         team emotion level (So you start getting level 3 pages at team emotion level 3 and can get them every level after that)
@@ -352,7 +382,7 @@ class EmotionLimitsItems(Range):
     4. There is no additional page draw after the one at level 5.
     5. You CAN stack up to 15 abno pages on a single unit.
     """
-    display_name = "Passive Limits Break Items"
+    display_name = "Emotion Limits Break Items"
     range_start = 0
     range_end = 15
     default = 13
@@ -361,7 +391,7 @@ class StartingEmotionLimitsItems(Range):
     """
     Select the amount of "Emotion Limits Break" Items you are starting with.
     """
-    display_name = "Starting Passive Limits Break Items"
+    display_name = "Starting Emotion Limits Break Items"
     range_start = 0
     range_end = 15
     default = 2
@@ -382,16 +412,18 @@ class ExclusivenessRemove(Choice):
 
 class FillerItems(Choice):
     """
+    BOOK REQUIREMENTS MODE ONLY.
+
     Select which filler items are going to be in the pool.
 
     NOTE: Book of Everything doesn't work yet.
 
-    Book of Everything - It's drops adapt to your current progress, giving you pages around your current level.
+    Book of Everything - Its drops adapt to your current progress, giving you pages around your current level.
                          Page rarity has small impact on item weights (Every rarity can drop almost with the same chance).
                          Allows for a more balanced playthrough. Amount of each page dropped is random.
     Booster Packs - Can give you any page in the game no matter when you burn them, but every page is dropped as a single copy,
                     and page weight decreases with rarity drastically (Higher rarity will drop a lot less).
-                    Makes playthough a less balanced, and maybe more fun. If you win in the gacha.
+                    Makes the playthrough less balanced, and maybe more fun. If you win in the gacha.
     """
     display_name = "Filler Items"
     option_bookofeverything = 0
@@ -440,7 +472,7 @@ class TrapsSevereness(Choice):
     Mediocre - Traps can activate at the beginning of any Scene from the moment you get them, once. Effects can ruin your plans and be a nuisance for you;
     Dangerous - Traps can activate at any time from the moment you get them (at any point of any scene). They also get tied to the exact Scene and Reception they activated at,
             making it so they are repeated if you restart the reception (by losing or restarting), until you beat that reception.
-            This level has the most impactful and invonvenient effects ready to mess up your run.
+            This level has the most impactful and inconvenient effects ready to mess up your run.
     """
 
     display_name = "Traps Severeness"
@@ -499,6 +531,7 @@ class IncomingDeathlink(Choice):
 class LOROptions(PerGameCommonOptions):
     # Start and Goals
     endgoals: Endgoals
+    persistent_goals: PersistentGoals
     ensemble_battles: EnsembleBattles
     endgoals_always_unlocked: EndgoalsAlwaysUnlocked
     lock_floors: LockFloors
