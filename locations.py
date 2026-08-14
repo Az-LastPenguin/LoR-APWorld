@@ -750,9 +750,9 @@ def validate_setup_result(result: LORSetupResult) -> None:
     if result.boe_layers_mode:
         bootstrap = layers_by_sphere[1].get(1, [])
         if len(bootstrap) < 2:
-            raise Exception("LORAP BoE bootstrap layer has fewer than two receptions")
+            raise Exception("LORAP bootstrap layer has fewer than two receptions")
         if any(node.kind != "reception" or node.req_librarians > 1 for node in bootstrap):
-            raise Exception("LORAP BoE bootstrap layer contains a gated battle")
+            raise Exception("LORAP bootstrap layer contains a gated battle")
 
     for source, target in result.progression_edges:
         if source == target:

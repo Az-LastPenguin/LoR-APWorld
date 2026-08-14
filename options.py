@@ -172,8 +172,6 @@ class RandomizeBlackSilencePage(Toggle):
 
 class BookContentsRandomization(Choice):
     """
-    ???NOT IMPLEMENTED??? TODO
-
     Select the way every vanilla book's contents will be randomized.
 
     BookChapter - Book contents will be balanced around the chapter of the book.
@@ -225,18 +223,18 @@ class ProgressionMode(Choice):
     """
     Book Requirements - Battles are gated by the battle graph and required books.
 
-    BoE Layers - Burning books unlocks new battle layers. Entering the next sphere
+    Layered - Burning books unlocks new battle layers. Entering the next sphere
                  also requires clearing the configured percentage of the current sphere.
                  Books of Everything provide max stacks of pages in a little mixed chapter-by-chapter order,
                  while Booster Packs provide a few mostly random pages.
 
-    Compared with Book Requirements, BoE Layers gives the player more freedom to
+    Compared with Book Requirements, Layered mode gives the player more freedom to
     choose which battles to complete and is better suited for sync-sessions.
     """
 
     display_name = "Progression Mode"
     option_book_requirements = 0
-    option_boe_layers = 1
+    option_layered = 1
     default = 0
 
 class ShuffleAbnos(Toggle):
@@ -303,7 +301,7 @@ class EndgoalsAlwaysUnlocked(Toggle):
 
 class SphereClearPercentage(Range):
     """
-    BOE LAYERS MODE ONLY.
+    LAYERED MODE ONLY.
 
     Controls how much of the current sphere must be completed before the first
     layer of the next sphere can be unlocked.
