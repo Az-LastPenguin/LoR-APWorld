@@ -50,10 +50,10 @@ reception_nodes: list[ReceptionNode] = [
     ReceptionNode(id=30002, name="Full-Stop Office", checks=5, next=[30007], chapter = 4),
     ReceptionNode(id=30003, name="Dawn Office", checks=5, next=[30008], chapter = 4),
     ReceptionNode(id=30004, name="Gaze Office", checks=5, next=[30005], chapter = 4),
-    ReceptionNode(id=30005, name="Tomerry", checks=7, next=[40002, 100011, 100012], chapter = 4),
+    ReceptionNode(id=30005, name="Tomerry", checks=7, next=[40002, 100011, 100012], chapter = 4, req_librarians=2),
     ReceptionNode(id=30006, name="Kurokumo Clan", checks=6, next=[40004, 100011, 100012], chapter = 4),
     ReceptionNode(id=30007, name="Musicians of Bremen", checks=6, next=[40001, 100011, 100012], chapter = 4),
-    ReceptionNode(id=30008, name="Wedge Office", checks=6, next=[40003, 100011, 100012], chapter = 4),
+    ReceptionNode(id=30008, name="Wedge Office", checks=6, next=[40003, 100011, 100012], chapter = 4, req_librarians=2),
 
     ReceptionNode(id=100009, name="Rusted Chains", checks=5, next=[], chapter = 4),
     ReceptionNode(id=100010, name="Workshop-affiliated Fixers", checks=5, next=[], chapter = 4),

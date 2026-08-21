@@ -41,7 +41,7 @@ class LORWebWorld(WebWorld):
         ]),
         OptionGroup("Battle Graph and Progression", [
             lor_options.ProgressionMode,
-            lor_options.SphereClearPercentage,
+            lor_options.ChapterClearPercentage,
             lor_options.ReceptionsRequireBooks,
             lor_options.FloorsRequireBooks,
             lor_options.BookRequirementDensity,
@@ -63,7 +63,7 @@ class LORWebWorld(WebWorld):
         ]),
         OptionGroup("Book Contents and Filler", [
             lor_options.BookContentsRandomization,
-            lor_options.FillerItems,
+            #lor_options.FillerItems,
             lor_options.FillerPages,
             lor_options.ExclusivenessRemove,
         ]),
@@ -547,7 +547,7 @@ class LORWorld(World):
             if copies > 0:
                 itempool.extend([item_name] * copies)
 
-        filler_name = "Booster Pack" if self._boe_layers_enabled() else ["Book of Everything", "Booster Pack"][self.options.filler_items.value]
+        filler_name = "Booster Pack" # if self._boe_layers_enabled() else ["Book of Everything", "Booster Pack"][self.options.filler_items.value]
         itempool.extend([filler_name] * max(0, total_locations - len(itempool)))
 
         if len(itempool) > total_locations:
@@ -694,7 +694,7 @@ class LORWorld(World):
             "book_requirement_density",
             #"shortcut_connections",
             "progression_mode",
-            "sphere_clear_percentage",
+            "chapter_clear_percentage",
             "deathlink",
             "outgoing_deathlink",
             "incoming_deathlink",

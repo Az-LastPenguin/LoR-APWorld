@@ -186,7 +186,7 @@ class BookContentsRandomization(Choice):
 
 class BalanceBookRequirements(Toggle):
     """
-    BOOK REQUIREMENTS MODE ONLY.
+    BATTLE GRAPH MODE ONLY.
 
     If true, receptions/suppressions/realizations will require books from around their chapters.
     Otherwise, random books will be selected.
@@ -196,7 +196,7 @@ class BalanceBookRequirements(Toggle):
 
 class BookRequirementDensity(Range):
     """
-    BOOK REQUIREMENTS MODE ONLY.
+    BATTLE GRAPH MODE ONLY.
 
     Controls how many nodes on the map will share the same book requirement.
 
@@ -212,7 +212,7 @@ class BookRequirementDensity(Range):
 
 class ShortcutConnections(Toggle):
     """
-    If true, some battles in the same sphere may connect across multiple graph layers.
+    If true, some battles in the same chapter may connect across multiple graph layers.
     If false, connections only lead to the immediately following layer.
     """
 
@@ -221,21 +221,21 @@ class ShortcutConnections(Toggle):
 
 class ProgressionMode(Choice):
     """
-    Book Requirements - Battles are gated by the battle graph and required books.
+    Battle Graph - Battles are gated by the battle graph and require books.
 
-    Layered - Burning books unlocks new battle layers. Entering the next sphere
-                 also requires clearing the configured percentage of the current sphere.
-                 Books of Everything provide max stacks of pages in a little mixed chapter-by-chapter order,
+    Layered - Burning books unlocks new battle layers. Entering the next chapter
+                 also requires clearing the configured percentage of the current chapter.
+                 Books of Everything provides max stacks of pages in a little mixed chapter-by-chapter order,
                  while Booster Packs provide a few mostly random pages.
 
-    Compared with Book Requirements, Layered mode gives the player more freedom to
+    Compared to Battle Graph, Layered mode gives the player a little more freedom to
     choose which battles to complete and is better suited for sync-sessions.
     """
 
     display_name = "Progression Mode"
-    option_book_requirements = 0
+    option_battle_graph = 0
     option_layered = 1
-    default = 0
+    default = 1
 
 class ShuffleAbnos(Toggle):
     """
@@ -263,7 +263,7 @@ class ShuffleReverbEnsembleFloors(Toggle):
 ### PROGRESSION ###
 class ReceptionsRequireBooks(Toggle):
     """
-    BOOK REQUIREMENTS MODE ONLY.
+    BATTLE GRAPH MODE ONLY.
 
     If 'true', every reception will require books to send invitation.
     """
@@ -273,7 +273,7 @@ class ReceptionsRequireBooks(Toggle):
 
 class FloorsRequireBooks(Toggle):
     """
-    BOOK REQUIREMENTS MODE ONLY.
+    BATTLE GRAPH MODE ONLY.
 
     If 'true', Abnormality Suppressions and Realizations will require books.
     """
@@ -299,15 +299,15 @@ class EndgoalsAlwaysUnlocked(Toggle):
     display_name = "Endgoals Always Unlocked"
     default = False
 
-class SphereClearPercentage(Range):
+class ChapterClearPercentage(Range):
     """
     LAYERED MODE ONLY.
 
-    Controls how much of the current sphere must be completed before the first
-    layer of the next sphere can be unlocked.
+    Controls how much of the current chapter must be completed before the first
+    layer of the next chapter can be unlocked.
     """
 
-    display_name = "Sphere Clear Percentage"
+    display_name = "Chapter Clear Percentage"
     range_start = 0
     range_end = 100
     default = 50
@@ -408,25 +408,25 @@ class ExclusivenessRemove(Choice):
     option_remove = 2
     default = 1
 
-class FillerItems(Choice):
-    """
-    BOOK REQUIREMENTS MODE ONLY.
-
-    Select which filler items are going to be in the pool.
-
-    NOTE: Book of Everything doesn't work yet.
-
-    Book of Everything - Its drops adapt to your current progress, giving you pages around your current level.
-                         Page rarity has small impact on item weights (Every rarity can drop almost with the same chance).
-                         Allows for a more balanced playthrough. Amount of each page dropped is random.
-    Booster Packs - Can give you any page in the game no matter when you burn them, but every page is dropped as a single copy,
-                    and page weight decreases with rarity drastically (Higher rarity will drop a lot less).
-                    Makes the playthrough less balanced, and maybe more fun. If you win in the gacha.
-    """
-    display_name = "Filler Items"
-    option_bookofeverything = 0
-    option_boosterpacks = 1
-    default = 1
+#class FillerItems(Choice):
+#    """
+#    BATTLE GRAPH MODE ONLY.
+#
+#    Select which filler items are going to be in the pool.
+#
+#    NOTE: Book of Everything doesn't work yet.
+#
+#    Book of Everything - Its drops adapt to your current progress, giving you pages around your current level.
+#                         Page rarity has small impact on item weights (Every rarity can drop almost with the same chance).
+#                         Allows for a more balanced playthrough. Amount of each page dropped is random.
+#    Booster Packs - Can give you any page in the game no matter when you burn them, but every page is dropped as a single copy,
+#                    and page weight decreases with rarity drastically (Higher rarity will drop a lot less).
+#                    Makes the playthrough less balanced, and maybe more fun. If you win in the gacha.
+#    """
+#    display_name = "Filler Items"
+#    option_bookofeverything = 0
+#    option_boosterpacks = 1
+#    default = 1
 
 class FillerPages(Range):
     """
@@ -537,7 +537,7 @@ class LOROptions(PerGameCommonOptions):
 
     # Battle Graph and Progression
     progression_mode: ProgressionMode
-    sphere_clear_percentage: SphereClearPercentage
+    chapter_clear_percentage: ChapterClearPercentage
     receptions_require_books: ReceptionsRequireBooks
     floors_require_books: FloorsRequireBooks
     book_requirement_density: BookRequirementDensity
@@ -559,7 +559,7 @@ class LOROptions(PerGameCommonOptions):
 
     # Book Contents and Filler
     book_contents_randomization: BookContentsRandomization
-    filler_items: FillerItems
+    #filler_items: FillerItems
     filler_pages: FillerPages
     remove_exclusive: ExclusivenessRemove
 
